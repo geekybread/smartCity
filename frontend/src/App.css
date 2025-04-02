@@ -1,3 +1,12 @@
+.App {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 50, 150, 0.1);
+}
+
 /* Notification Styles */
 .notification-banner {
   position: fixed;
@@ -67,7 +76,8 @@
 }
 
 .search-fields button:hover {
-  background-color: #3367d6;
+  background: #3a56d4;
+  transform: translateY(-1px);
 }
 
 /* Responsive Design */

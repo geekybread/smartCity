@@ -1,10 +1,13 @@
 import axios from 'axios';
 import { getCountryCode } from '../utils/countryCodes';
 
+const apiKey = process.env.REACT_APP_OPENWEATHERMAP_API_KEY || '';
+if (!apiKey) throw new Error('Missing API key configuration');
+
 const weatherApi = axios.create({
   baseURL: 'https://api.openweathermap.org',
   params: {
-    appid: process.env.REACT_APP_OPENWEATHERMAP_API_KEY
+    appid: apiKey
   },
   timeout: 10000
 });
