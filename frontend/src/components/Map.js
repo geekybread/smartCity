@@ -1,86 +1,118 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, useLoadScript, TrafficLayer } from '@react-google-maps/api';
 import { getWeatherData, getCityCoordinates } from '../services/weather';
+import { GOOGLE_MAPS_CONFIG } from './configs/maps';
+import './Map.css';
 
-const mapContainerStyle = {
-  width: '100%',
-  height: '400px',
-};
-
-const Map = ({ city }) => {
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
-  });
-
-  const [weather, setWeather] = useState({
-    main: { temp: 'N/A' },
-    weather: [{ description: 'N/A' }],
-  });
-  const [center, setCenter] = useState({
-    lat: 34.04924594193164,  // Default center (Los Angeles)
-    lng: -118.24104309082031,
-  });
+const Map = ({ city, country, onResult }) => {
+  const [weather, setWeather] = useState(null);
+  const [center, setCenter] = useState({ lat: 28.6139, lng: 77.2090 });
   const [map, setMap] = useState(null);
-  const [showTraffic, setShowTraffic] = useState(false);  // Toggle traffic layer
+  const [showTraffic, setShowTraffic] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const prevSearchRef = useRef('');
 
-  // Fetch city coordinates and update map center
-  useEffect(() => {
-    const fetchCityData = async () => {
-      try {
-        const { lat, lon } = await getCityCoordinates(city);
-        setCenter({ lat, lng: lon });
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: GOOGLE_MAPS_CONFIG.apiKey,
+    libraries: GOOGLE_MAPS_CONFIG.libraries,
+  });
 
-        // Fetch weather data for the new city
-        const weatherData = await getWeatherData(lat, lon);
-        setWeather(weatherData);
-      } catch (error) {
-        console.error('Error fetching city data:', error);
-        setWeather({ error: 'Failed to load city data' });
+  const fetchData = useCallback(async () => {
+    try {
+      const currentSearch = `${city}|${country}`;
+      if (prevSearchRef.current === currentSearch || (!city && !country)) {
+        return;
       }
-    };
+      prevSearchRef.current = currentSearch;
 
-    fetchCityData();
-  }, [city]);
+      setIsLoading(true);
+      setWeather(null);
 
-  // Handle map load
+      const { lat, lon } = await getCityCoordinates(city, country);
+      setCenter({ lat, lng: lon });
+
+      const weatherData = await getWeatherData(lat, lon);
+      setWeather(weatherData);
+
+      if (onResult) {
+        const message = city 
+          ? `${city} found${country ? ` in ${country}` : ''}`
+          : `Showing capital of ${country}`;
+        onResult({ success: true, message });
+      }
+
+    } catch (error) {
+      console.error('Error:', error);
+      if (onResult) {
+        let message;
+        switch(error.message) {
+          case 'CITY_NOT_FOUND':
+            message = `${city} not found${country ? ` in ${country}` : ''}`;
+            break;
+          case 'CITY_NOT_IN_COUNTRY':
+            message = `${city} not found in ${country}`;
+            break;
+          case 'COUNTRY_NOT_FOUND':
+            message = `${country} not found`;
+            break;
+          case 'INVALID_COUNTRY':
+            message = `Invalid country: ${country}`;
+            break;
+          default:
+            message = 'Failed to load location data';
+        }
+        onResult({ success: false, message });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [city, country, onResult]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    fetchData();
+  }, [isLoaded, fetchData]);
+
   const onLoad = useCallback((map) => {
     setMap(map);
   }, []);
 
-  // Handle errors and loading states
   if (loadError) return <div>Error loading maps</div>;
   if (!isLoaded) return <div>Loading Maps...</div>;
 
   return (
-    <div>
-      <div className="widgets">
-        <div className="widget">
-          <h2>Weather</h2>
-          <p>
-            {weather && weather.main
-              ? `${weather.main.temp}°C, ${weather.weather[0].description}`
-              : weather?.error || 'Loading weather data...'}
-          </p>
-        </div>
+    <div className="map-page-container">
+      <div className="map-container">
+        <GoogleMap
+          mapContainerStyle={{ width: '100%', height: '100%' }}
+          zoom={13}
+          center={center}
+          onLoad={onLoad}
+        >
+          {showTraffic && <TrafficLayer />}
+        </GoogleMap>
+        <button
+          onClick={() => setShowTraffic(!showTraffic)}
+          className="traffic-toggle"
+          disabled={isLoading}
+        >
+          {showTraffic ? 'Hide Traffic' : 'Show Traffic'}
+        </button>
       </div>
-
-      {/* Toggle Traffic Button */}
-      <button
-        onClick={() => setShowTraffic(!showTraffic)}
-        className="traffic-toggle"
-      >
-        {showTraffic ? 'Hide Traffic' : 'Show Traffic'}
-      </button>
-
-      {/* Map */}
-      <GoogleMap
-        mapContainerStyle={mapContainerStyle}
-        zoom={13}
-        center={center}
-        onLoad={onLoad}  // Call onLoad when the map loads
-      >
-        {showTraffic && <TrafficLayer />}  {/* Conditionally render traffic layer */}
-      </GoogleMap>
+      
+      <div className="weather-widget">
+        <h2>Weather</h2>
+        {isLoading ? (
+          <div>Loading...</div>
+        ) : weather ? (
+          <>
+            <p>{weather.main?.temp}°C</p>
+            <p>{weather.weather?.[0]?.description}</p>
+          </>
+        ) : (
+          <div>No weather data</div>
+        )}
+      </div>
     </div>
   );
 };

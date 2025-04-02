@@ -1,19 +1,83 @@
 import axios from 'axios';
+import { getCountryCode } from '../utils/countryCodes';
 
-const API_KEY = 'f9293dbeda02be4bda1ce865b2706cb4';
-const BASE_URL = 'https://api.openweathermap.org/data/2.5';
+const weatherApi = axios.create({
+  baseURL: 'https://api.openweathermap.org',
+  params: {
+    appid: process.env.REACT_APP_OPENWEATHERMAP_API_KEY
+  },
+  timeout: 10000
+});
 
-// Fetch weather data
-export const getWeatherData = async (lat, lon) => {
-  const response = await axios.get(`${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`);
-  return response.data;
+const countriesApi = axios.create({
+  baseURL: 'https://restcountries.com/v3.1',
+  timeout: 10000
+});
+
+const requestCache = new Map();
+
+export const getCityCoordinates = async (city, country = '') => {
+  const cacheKey = `coords_${city}_${country}`;
+  
+  if (requestCache.has(cacheKey)) {
+    return requestCache.get(cacheKey);
+  }
+
+  try {
+    const countryCode = country ? getCountryCode(country) : '';
+    
+    if (country && !countryCode) {
+      throw new Error('INVALID_COUNTRY');
+    }
+
+    let result;
+    
+    if (!city && countryCode) {
+      const capital = await getCountryCapital(countryCode);
+      result = await searchCityInCountry(capital, countryCode);
+    } else if (city && countryCode) {
+      result = await searchCityInCountry(city, countryCode);
+    } else if (city) {
+      const { data } = await weatherApi.get('/geo/1.0/direct', {
+        params: { q: city, limit: 1 }
+      });
+      if (!data.length) throw new Error('CITY_NOT_FOUND');
+      result = { lat: data[0].lat, lon: data[0].lon };
+    } else {
+      throw new Error('INVALID_INPUT');
+    }
+
+    requestCache.set(cacheKey, result);
+    return result;
+
+  } catch (error) {
+    requestCache.set(cacheKey, { error: error.message });
+    throw error;
+  }
 };
 
-// Fetch city coordinates
-export const getCityCoordinates = async (city) => {
-  const response = await axios.get(`${BASE_URL}/weather?q=${city}&appid=${API_KEY}`);
-  return {
-    lat: response.data.coord.lat,
-    lon: response.data.coord.lon,
-  };
+const searchCityInCountry = async (city, countryCode) => {
+  const { data } = await weatherApi.get('/geo/1.0/direct', {
+    params: { q: `${city},${countryCode}`, limit: 1 }
+  });
+  
+  if (!data.length) throw new Error('CITY_NOT_IN_COUNTRY');
+  return { lat: data[0].lat, lon: data[0].lon };
+};
+
+export const getCountryCapital = async (countryCode) => {
+  const { data } = await countriesApi.get(`/alpha/${countryCode.toLowerCase()}`);
+  
+  if (!data.length || !data[0].capital) {
+    throw new Error('COUNTRY_NOT_FOUND');
+  }
+  
+  return data[0].capital[0];
+};
+
+export const getWeatherData = async (lat, lon) => {
+  const { data } = await weatherApi.get('/data/2.5/weather', {
+    params: { lat, lon, units: 'metric' }
+  });
+  return data;
 };
