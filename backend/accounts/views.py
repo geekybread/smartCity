@@ -1,3 +1,4 @@
+# accounts/views.py
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -5,21 +6,24 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from .models import CustomUser
-from .forms import RegistrationForm, LoginForm
 from django.views.decorators.csrf import csrf_exempt
+import re
 
 @api_view(['POST'])
-@csrf_exempt  # Only for development if CSRF is causing issues
+@csrf_exempt
 def register(request):
     try:
-        # Manual data validation (more flexible than forms for API)
+        # Get all fields
         username = request.data.get('username')
         password = request.data.get('password')
-        email = request.data.get('email', '')
+        email = request.data.get('email')
+        name = request.data.get('name')
+        mobile = request.data.get('mobile')
         
-        if not username or not password:
+        # Validation
+        if not all([username, password, email, name, mobile]):
             return Response(
-                {'status': 'error', 'message': 'Username and password are required'},
+                {'status': 'error', 'message': 'All fields are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -29,10 +33,25 @@ def register(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        if not re.match(r'^\d{10,15}$', mobile):
+            return Response(
+                {'status': 'error', 'message': 'Invalid mobile number format'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if CustomUser.objects.filter(email=email).exists():
+            return Response(
+                {'status': 'error', 'message': 'Email already exists'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create user with all fields
         user = CustomUser.objects.create_user(
             username=username,
             password=password,
-            email=email
+            email=email,
+            name=name,
+            mobile=mobile
         )
         
         token = Token.objects.create(user=user)
@@ -40,7 +59,10 @@ def register(request):
             'status': 'success',
             'token': token.key,
             'user_id': user.id,
-            'username': user.username
+            'username': user.username,
+            'email': user.email,
+            'name': user.name,
+            'mobile': user.mobile
         }, status=status.HTTP_201_CREATED)
         
     except Exception as e:
@@ -50,7 +72,7 @@ def register(request):
         )
 
 @api_view(['POST'])
-@csrf_exempt  # Only for development
+@csrf_exempt
 def user_login(request):
     try:
         username = request.data.get('username')
@@ -75,7 +97,10 @@ def user_login(request):
             'status': 'success',
             'token': token.key,
             'user_id': user.id,
-            'username': user.username
+            'username': user.username,
+            'email': user.email,
+            'name': user.name,
+            'mobile': user.mobile
         })
         
     except Exception as e:
@@ -85,7 +110,7 @@ def user_login(request):
         )
 
 @api_view(['POST'])
-def user_logout(request):
+def update_account(request):
     try:
         if not request.auth:
             return Response(
@@ -93,14 +118,56 @@ def user_logout(request):
                 status=status.HTTP_401_UNAUTHORIZED
             )
             
-        request.auth.delete()
-        return Response(
-            {'status': 'success', 'message': 'Successfully logged out'},
-            status=status.HTTP_200_OK
-        )
+        user = request.auth.user
+        email = request.data.get('email')
+        mobile = request.data.get('mobile')
+        password = request.data.get('password')
+        
+        # Validate mobile if provided
+        if mobile and not re.match(r'^\d{10,15}$', mobile):
+            return Response(
+                {'status': 'error', 'message': 'Invalid mobile number format'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Update fields if provided
+        if email:
+            user.email = email
+        if mobile:
+            user.mobile = mobile
+        if password:
+            user.set_password(password)
+        
+        user.save()
+        
+        return Response({
+            'status': 'success',
+            'message': 'Account updated successfully',
+            'user': {
+                'username': user.username,
+                'email': user.email,
+                'name': user.name,
+                'mobile': user.mobile
+            }
+        })
         
     except Exception as e:
         return Response(
             {'status': 'error', 'message': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+@api_view(['POST'])
+@csrf_exempt
+def user_logout(request):
+    try:
+        request.auth.delete()
+        return Response(
+            {'status': 'success', 'message': 'Logged out successfully'},
+            status=status.HTTP_200_OK
+        )
+    except:
+        return Response(
+            {'status': 'error', 'message': 'Logout failed'},
+            status=status.HTTP_400_BAD_REQUEST
         )

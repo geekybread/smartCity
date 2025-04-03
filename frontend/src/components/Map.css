@@ -310,37 +310,62 @@
     color: #333;
   }
   
-  .profile-section {
-    padding: 15px;
+  /* Profile Specific Styles */
+.profile-sidebar {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
   
-  .profile-info {
+  .profile-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .profile-header {
     display: flex;
     align-items: center;
     margin-bottom: 20px;
   }
   
   .profile-avatar {
-    font-size: 2.5rem;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #4361ee;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
     margin-right: 15px;
   }
   
-  .profile-details h3 {
+  .profile-info h3 {
     margin: 0;
     font-size: 1.3rem;
-    color: #333;
   }
   
-  .profile-details p {
-    margin: 5px 0 0;
+  .profile-info p {
     color: #666;
-    font-size: 0.9rem;
+    font-style: italic;
   }
   
-  .profile-form {
-    margin-top: 20px;
+  .profile-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
   }
   
+  .profile-section h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #4361ee;
+    font-size: 1.1rem;
+  }
+
   .form-group {
     margin-bottom: 15px;
   }
@@ -359,25 +384,131 @@
     border-radius: 4px;
   }
   
-  .form-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
+  .mt-1 {
+    margin-top: 8px;
   }
   
-  .save-btn, .logout-btn {
-    padding: 8px 15px;
+  .profile-actions {
+    margin-top: auto;
+    display: flex;
+    gap: 10px;
+    padding-top: 20px;
+  }
+  
+  .save-btn, .logout-btn, .login-btn {
+    padding: 10px 15px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    font-weight: 500;
   }
   
   .save-btn {
     background-color: #4361ee;
     color: white;
+    flex: 1;
   }
   
   .logout-btn {
-    background-color: #f44336;
+    background-color: #f8f9fa;
+    color: #f44336;
+    border: 1px solid #f44336;
+    flex: 1;
+  }
+  
+  .auth-options {
+    text-align: center;
+    padding: 20px 0;
+  }
+  
+  .auth-options h3 {
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  .auth-options p {
+    color: #666;
+    margin-bottom: 20px;
+  }
+  
+  .login-btn {
+    background-color: #4361ee;
     color: white;
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+  }
+  input:disabled {
+    background-color: #f0f0f0;
+    color: #666;
+  }
+
+/* Account Information Styles */
+.account-info-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+  
+  .account-info-section h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #4361ee;
+  }
+  
+  .info-group {
+    margin-bottom: 15px;
+  }
+  
+  .info-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    color: #555;
+  }
+  
+  .info-value {
+    padding: 8px 12px;
+    background-color: #fff;
+    border-radius: 4px;
+    color: #333;
+    border: 1px solid #eee;
+  }
+
+  /* Settings Toggle Button */
+.settings-toggle-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 4px;
+    margin: 10px 0;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  .settings-toggle-btn:hover {
+    background-color: #e0e0e0;
+  }
+  
+  /* Account Settings Section */
+  .account-settings-section {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+  
+  .account-settings-section h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #4361ee;
+  }
+  
+  /* Logout Section */
+  .logout-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
   }

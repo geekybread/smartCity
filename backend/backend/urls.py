@@ -21,8 +21,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     path('api/auth/', include([
-        path('register/', auth_views.register, name='register'), 
+        path('register/', auth_views.register, name='register'),
         path('login/', auth_views.user_login, name='login'),
         path('logout/', auth_views.user_logout, name='logout'),
+        path('update/', auth_views.update_account, name='update-account'),
     ])),
 ]

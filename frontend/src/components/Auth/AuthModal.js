@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import './AuthModal.css';
 
 const AuthModal = ({ onClose, onLoginSuccess }) => {
-  const [mode, setMode] = useState('login'); // 'login' or 'register'
+  const [mode, setMode] = useState('login');
   const [formData, setFormData] = useState({
     username: '',
-    password: '',
     email: '',
+    name: '',      
+    mobile: '',
+    password: '',    
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -17,13 +19,18 @@ const AuthModal = ({ onClose, onLoginSuccess }) => {
     setIsLoading(true);
 
     try {
-      // Basic validation
+      // Frontend validation
       if (!formData.username || !formData.password) {
         throw new Error('Username and password are required');
       }
 
-      if (mode === 'register' && !formData.email) {
-        throw new Error('Email is required for registration');
+      if (mode === 'register') {
+        if (!formData.email) throw new Error('Email is required');
+        if (!formData.name) throw new Error('Full name is required');
+        if (!formData.mobile) throw new Error('Mobile number is required');
+        if (!/^\d{10,15}$/.test(formData.mobile)) {
+          throw new Error('Mobile number must be 10-15 digits');
+        }
       }
 
       const endpoint = mode === 'login' ? 'login' : 'register';
@@ -32,42 +39,40 @@ const AuthModal = ({ onClose, onLoginSuccess }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
+        body: JSON.stringify(mode === 'login' ? {
+          username: formData.username,
+          password: formData.password
+        } : {
           username: formData.username,
           password: formData.password,
-          ...(mode === 'register' && { email: formData.email })
+          email: formData.email,
+          name: formData.name,
+          mobile: formData.mobile
         }),
       });
 
       const data = await response.json();
 
-      if (data.status === 'success') {
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('userId', data.user_id);
-        localStorage.setItem('username', data.username);
-        localStorage.setItem('email', data.email || ''); // New
-        onLoginSuccess();
-      } else {
+      if (!response.ok) {
         throw new Error(data.message || 'Authentication failed');
       }
 
-      if (!response.ok) {
-        throw new Error(data.error || data.message || 'Authentication failed');
-      }
-
-      if (!data.token) {
-        throw new Error('No authentication token received');
-      }
-
-      // Store token and user data securely
       localStorage.setItem('authToken', data.token);
-      if (data.user_id) {
-        localStorage.setItem('userId', data.user_id);
-      }
+      localStorage.setItem('userData', JSON.stringify({
+        username: data.username,
+        email: data.email,
+        name: data.name,
+        mobile: data.mobile
+      }));
 
-      onLoginSuccess();
+      onLoginSuccess({
+        username: data.username,
+        email: data.email,
+        name: data.name,
+        mobile: data.mobile
+      });
+
     } catch (error) {
-      console.error('Authentication error:', error);
       setError(error.message || 'Authentication failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -91,6 +96,18 @@ const AuthModal = ({ onClose, onLoginSuccess }) => {
         {error && <div className="auth-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
+          {mode === 'register' && (
+            <input
+              type="text"
+              name="name"
+              placeholder="Full Name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+              disabled={isLoading}
+            />
+          )}
+          
           <input
             type="text"
             name="username"
@@ -102,15 +119,28 @@ const AuthModal = ({ onClose, onLoginSuccess }) => {
           />
           
           {mode === 'register' && (
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-              disabled={isLoading}
-            />
+            <>
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                disabled={isLoading}
+              />
+              <input
+                type="tel"
+                name="mobile"
+                placeholder="Mobile Number"
+                value={formData.mobile}
+                onChange={handleInputChange}
+                required
+                disabled={isLoading}
+                pattern="[0-9]{10,15}"
+                title="Please enter a valid mobile number (10-15 digits)"
+              />
+            </>
           )}
 
           <input

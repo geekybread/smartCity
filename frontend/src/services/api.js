@@ -1,20 +1,94 @@
-import axios from 'axios';
+const API_BASE = 'http://localhost:8000/api/auth';
 
-const API_URL = 'http://localhost:8000/api';  // Backend URL
-
-export const getTrafficData = async () => {
-  const response = await axios.get(`${API_URL}/traffic/`);
-  return response.data;
+export const login = async (credentials) => {
+  try {
+    const response = await fetch(`${API_BASE}/login/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: credentials.username,
+        password: credentials.password
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Login failed');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
 };
 
-export const getWeatherData = async () => {
-  const response = await axios.get(`${API_URL}/weather/`);
-  return response.data;
+export const register = async (userData) => {
+  try {
+    const response = await fetch(`${API_BASE}/register/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: userData.username,
+        password: userData.password,
+        email: userData.email,
+        name: userData.name,
+        mobile: userData.mobile
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Registration failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Registration error:', error);
+    throw error;
+  }
 };
 
-export const getTrafficDirections = async (origin, destination) => {
-    const response = await axios.get(
-      `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&departure_time=now&traffic_model=best_guess&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
-    );
-    return response.data;
-  };
+export const updateAccount = async (updates, token) => {
+  try {
+    const response = await fetch(`${API_BASE}/update/`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify(updates)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Update failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Update error:', error);
+    throw error;
+  }
+};
+
+export const logout = async (token) => {
+  try {
+    const response = await fetch(`${API_BASE}/logout/`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Logout failed');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Logout error:', error);
+    throw error;
+  }
+};

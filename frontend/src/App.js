@@ -25,18 +25,13 @@ function App() {
   // Check authentication status on load
   useEffect(() => {
     const token = localStorage.getItem('authToken');
-    const username = localStorage.getItem('username');
-    const email = localStorage.getItem('email'); // You'll need to store this during login
+    const userData = JSON.parse(localStorage.getItem('userData'));
     
-    if (token && username) {
+    if (token && userData) {
       setIsAuthenticated(true);
-      setUserData({
-        username,
-        email
-      });
+      setUserData(userData);
     }
   }, []);
-  
 
   // Auto-dismiss notification after 2 seconds
   useEffect(() => {
@@ -47,6 +42,35 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [notification]);
+
+  const handleLoginSuccess = (userData) => {
+    setIsAuthenticated(true);
+    setUserData(userData);
+    setNotification({
+      type: 'success',
+      message: 'Login successful'
+    });
+  };
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        await fetch('http://localhost:8000/api/auth/logout/', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.clear();
+      setIsAuthenticated(false);
+      setUserData(null);
+    }
+  };
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -155,6 +179,8 @@ function App() {
         ref={mapRef}
         userData={userData}
         setUserData={setUserData}
+        onLoginSuccess={handleLoginSuccess}
+        onLogout={handleLogout}
       />
     </div>
   );

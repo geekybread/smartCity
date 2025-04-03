@@ -30,7 +30,12 @@ const Map = React.forwardRef(({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const prevSearchRef = useRef('');
   const mapRef = useRef(null);
-  const [showProfile, setShowProfile] = useState(false);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [newMobile, setNewMobile] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: GOOGLE_MAPS_CONFIG.apiKey,
@@ -49,18 +54,108 @@ const Map = React.forwardRef(({
     setShowFeedbackForm(true);
   };
 
-  const handleLoginSuccess = () => {
+  //handleLoginSuccess to receive and store user data
+  const handleLoginSuccess = (userData) => {
     setIsAuthenticated(true);
+    setUserData(userData);
     setShowAuthModal(false);
+    localStorage.setItem('userData', JSON.stringify(userData));
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
-    setIsAuthenticated(false);
-    setUserData(null);
-    setShowProfile(false);
+  //handleLogout to call backend
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:8000/api/auth/logout/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+      setIsAuthenticated(false);
+      setUserData(null);
+      setActiveSidebar(null);
+    }
   };
+
+  //useEffect to load user data on mount
+useEffect(() => {
+  const storedData = localStorage.getItem('userData');
+  if (storedData) {
+    setUserData(JSON.parse(storedData));
+  }
+}, []);
+
+
+  const handleUpdateAccount = async () => {
+
+    try {
+      if (newPassword && newPassword !== confirmPassword) {
+        throw new Error('Passwords do not match');
+      }
+  
+      if (!newEmail && !newMobile && !newPassword) {
+        throw new Error('No changes made');
+      }
+
+    try {
+      setIsLoading(true);
+      
+      const updates = {};
+      if (newEmail && newEmail !== userData.email) updates.email = newEmail;
+      if (newMobile && newMobile !== userData.mobile) updates.mobile = newMobile;
+      if (newPassword && newPassword === confirmPassword) updates.password = newPassword;
+
+      if (Object.keys(updates).length === 0) {
+        throw new Error('No changes detected');
+      }
+
+      const response = await fetch('http://localhost:8000/api/auth/update/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify(updates)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Update failed');
+      }
+
+      // Update local storage and state
+      const updatedUserData = {
+        ...userData,
+        email: data.user.email || userData.email,
+        mobile: data.user.mobile || userData.mobile
+      };
+      localStorage.setItem('userData', JSON.stringify(updatedUserData));
+      setUserData(updatedUserData);
+      
+      // Reset form fields
+      setNewEmail('');
+      setNewMobile('');
+      setNewPassword('');
+      setConfirmPassword('');
+      
+      alert(data.message || 'Account updated successfully!');
+    } catch (error) {
+      alert(error.message || 'Failed to update account');
+    } finally {
+      setIsLoading(false);
+    }
+  } catch (error) {
+    alert(error.message);
+    setIsLoading(false);
+  }
+};
+
 
   const fetchData = useCallback(async () => {
     try {
@@ -267,6 +362,7 @@ const Map = React.forwardRef(({
     const newActiveSidebar = activeSidebar === sidebarName ? null : sidebarName;
     setActiveSidebar(newActiveSidebar);
     setShowTraffic(newActiveSidebar === 'traffic');
+    setShowFeedbackForm(false);
   };
 
   const getAqiLevel = (aqi) => {
@@ -319,25 +415,20 @@ const Map = React.forwardRef(({
       )}
 
       <div className="left-panel">
-        <div className="panel-title">Menu</div>
-    
-        {/* Add Profile button */}
+      <div className="panel-title">Menu</div>
+  
+        {/* Profile Button - Always visible */}
         <div 
-          className={`control-card ${showProfile ? 'active' : ''}`}
+          className={`control-card ${activeSidebar === 'profile' ? 'active' : ''}`}
           onClick={() => {
-            if (isAuthenticated) {
-              setShowProfile(!showProfile);
-              setActiveSidebar(null);
-            } else {
-              setShowAuthModal(true);
-            }
+            setActiveSidebar(activeSidebar === 'profile' ? null : 'profile');
+            setShowFeedbackForm(false);
           }}
         >
           <div className="control-icon">👤</div>
-          <div className="control-label">
-            {isAuthenticated ? (userData?.username || 'Profile') : 'Login'}
-          </div>
+          <div className="control-label">Profile</div>
         </div>
+
         <div 
           className={`control-card ${activeSidebar === 'weather' ? 'active' : ''}`} 
           onClick={() => toggleSidebar('weather')}
@@ -418,6 +509,133 @@ const Map = React.forwardRef(({
       </div>
 
       <div className={`right-sidebar ${activeSidebar ? 'active' : ''}`}>
+
+
+      {activeSidebar === 'profile' && (
+        <div className="profile-sidebar">
+          <div className="sidebar-header">
+            <h2>{isAuthenticated ? `${userData?.name || 'My Profile'}` : 'Account'}</h2>
+            <button onClick={() => setActiveSidebar(null)} className="close-sidebar">
+              &times;
+            </button>
+          </div>
+          <div className="sidebar-content">
+            {isAuthenticated ? (
+              <div className="profile-view">
+                <div className="profile-header">
+                  <div className="profile-avatar">
+                    {userData?.name?.charAt(0).toUpperCase() || userData?.username?.charAt(0).toUpperCase() || '👤'}
+                  </div>
+                  <div className="profile-info">
+                    <h3>{userData?.name}</h3>
+                    <p>@{userData?.username}</p>
+                  </div>
+                </div>
+
+                {/* Account Information Section */}
+                <div className="account-info-section">
+                  <h4>Account Information</h4>
+                  <div className="info-group">
+                    <label>Full Name</label>
+                    <div className="info-value">{userData?.name || '-'}</div>
+                  </div>
+                  <div className="info-group">
+                    <label>Username</label>
+                    <div className="info-value">@{userData?.username || '-'}</div>
+                  </div>
+                  <div className="info-group">
+                    <label>Email</label>
+                    <div className="info-value">{userData?.email || '-'}</div>
+                  </div>
+                  <div className="info-group">
+                    <label>Mobile Number</label>
+                    <div className="info-value">{userData?.mobile || '-'}</div>
+                  </div>
+                </div>
+
+                {/* Account Settings Button */}
+                <button 
+                  className="settings-toggle-btn"
+                  onClick={() => setShowAccountSettings(!showAccountSettings)}
+                >
+                  {showAccountSettings ? 'Hide Settings' : 'Account Settings'}
+                </button>
+
+                {/* Account Settings Section (Collapsible) */}
+                {showAccountSettings && (
+                  <div className="account-settings-section">
+                    <h4>Update Account</h4>
+                    <div className="form-group">
+                      <label>New Email</label>
+                      <input
+                        type="email"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        placeholder="Enter new email"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>New Mobile Number</label>
+                      <input
+                        type="tel"
+                        value={newMobile}
+                        onChange={(e) => setNewMobile(e.target.value)}
+                        placeholder="Enter new mobile"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Change Password</label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="New password"
+                      />
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Confirm new password"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="profile-actions">
+                      <button className="save-btn" onClick={handleUpdateAccount}>
+                        Save Changes
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="logout-section">
+                  <button 
+                    className="logout-btn"
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="auth-options">
+                <h3>Login to your account</h3>
+                <p>Access your profile and personalized features</p>
+                <button 
+                  className="login-btn"
+                  onClick={() => {
+                    setShowAuthModal(true);
+                    setActiveSidebar(null);
+                  }}
+                >
+                  Login / Register
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+
         {activeSidebar === 'weather' && weather && (
           <>
             <div className="sidebar-header">
@@ -460,6 +678,7 @@ const Map = React.forwardRef(({
             </div>
           </>
         )}
+
 
         {activeSidebar === 'airQuality' && (
           <>
@@ -582,60 +801,6 @@ const Map = React.forwardRef(({
             </div>
           </>
         )}
-
-          {showProfile && isAuthenticated && (
-            <>
-              <div className="sidebar-header">
-                <h2>User Profile</h2>
-                <button onClick={() => setShowProfile(false)} className="close-sidebar">
-                  &times;
-                </button>
-              </div>
-              <div className="sidebar-content">
-                <div className="profile-section">
-                  <div className="profile-info">
-                    <div className="profile-avatar">👤</div>
-                    <div className="profile-details">
-                      <h3>{userData?.username}</h3>
-                      <p>{userData?.email}</p>
-                    </div>
-                  </div>
-                  
-                  <form className="profile-form">
-                    <div className="form-group">
-                      <label>Email</label>
-                      <input 
-                        type="email" 
-                        value={userData?.email || ''} 
-                        onChange={(e) => setUserData({...userData, email: e.target.value})}
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>Change Password</label>
-                      <input 
-                        type="password" 
-                        placeholder="New password"
-                      />
-                    </div>
-                    
-                    <div className="form-actions">
-                      <button type="button" className="save-btn">
-                        Save Changes
-                      </button>
-                      <button 
-                        type="button" 
-                        className="logout-btn"
-                        onClick={handleLogout}
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </>
-          )}
       </div>
     </div>
   );

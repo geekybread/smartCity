@@ -1,11 +1,14 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser
+from regex import RegexValidator
 
 class RegistrationForm(UserCreationForm):
+    mobile = forms.CharField(max_length=15, validators=[RegexValidator(r'^\d{10,15}$')])
+    
     class Meta:
         model = CustomUser
-        fields = ('username', 'email', 'password1', 'password2', 'phone')
+        fields = ('username', 'email', 'name', 'mobile', 'password1', 'password2')
 
 class LoginForm(forms.Form):
     username = forms.CharField()
