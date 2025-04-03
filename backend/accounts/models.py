@@ -3,6 +3,8 @@ from django.db import models
 import re
 
 class CustomUser(AbstractUser):
+    first_name = None
+    last_name = None
     USER_TYPE_CHOICES = (
         (1, 'Admin'),
         (2, 'Regular User'),
