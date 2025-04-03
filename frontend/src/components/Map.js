@@ -1,10 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef, useImperativeHandle } from 'react';
-import { GoogleMap, useLoadScript, TrafficLayer } from '@react-google-maps/api';
+import { GoogleMap, useLoadScript, TrafficLayer, Marker } from '@react-google-maps/api';
 import { getWeatherData, getCityCoordinates, getAirQualityData } from '../services/weather';
 import { GOOGLE_MAPS_CONFIG } from './configs/maps';
+import FeedbackForm from '../components/Feedback/FeedbackForm';
+import FeedbackList from '../components/Feedback/FeedbackList';
+import AuthModal from '../components/Auth/AuthModal';
 import './Map.css';
 
-const Map = React.forwardRef(({ city, country, onResult }, ref) => {
+const Map = React.forwardRef(({ 
+  city, 
+  country, 
+  onResult,
+  isAuthenticated,  // Receive from App.js
+  setIsAuthenticated,
+  userData, 
+  setUserData  // Receive from App.js
+}, ref) => {
   const [weather, setWeather] = useState(null);
   const [airQuality, setAirQuality] = useState(null);
   const [center, setCenter] = useState({ lat: 28.6139, lng: 77.2090 });
@@ -12,25 +23,44 @@ const Map = React.forwardRef(({ city, country, onResult }, ref) => {
   const [showTraffic, setShowTraffic] = useState(false);
   const [activeSidebar, setActiveSidebar] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [markers, setMarkers] = useState([]);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const prevSearchRef = useRef('');
   const mapRef = useRef(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: GOOGLE_MAPS_CONFIG.apiKey,
     libraries: GOOGLE_MAPS_CONFIG.libraries,
   });
 
-  const defaultZoom = city ? 13 : 6; // Default zoom levels
+  const defaultZoom = city ? 13 : 6;
   const [zoom, setZoom] = useState(defaultZoom);
 
-  useImperativeHandle(ref, () => ({
-    refocus: () => {
-      if (mapRef.current) {
-        mapRef.current.panTo(center);
-        setZoom(defaultZoom);
-      }
+  const handleReportClick = () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
     }
-  }));
+    setSelectedLocation(`${city} (${center.lat.toFixed(4)}, ${center.lng.toFixed(4)})`);
+    setShowFeedbackForm(true);
+  };
+
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+    setShowAuthModal(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+    setIsAuthenticated(false);
+    setUserData(null);
+    setShowProfile(false);
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -39,8 +69,6 @@ const Map = React.forwardRef(({ city, country, onResult }, ref) => {
         return;
       }
       prevSearchRef.current = currentSearch;
-
-      console.log('ok')
 
       setIsLoading(true);
       setWeather(null);
@@ -61,6 +89,32 @@ const Map = React.forwardRef(({ city, country, onResult }, ref) => {
 
       setWeather(weatherData);
       setAirQuality(airQualityData);
+
+      // Load feedbacks for this city (mock data for now)
+      const mockFeedbacks = [
+        {
+          id: 1,
+          issueType: 'pothole',
+          description: 'Large pothole near the intersection causing traffic issues',
+          severity: 'high',
+          location: `${city} Central Area`,
+          coordinates: { lat: lat + 0.005, lng: lon + 0.005 },
+          timestamp: '2023-05-15T10:30:00Z',
+          anonymous: false
+        },
+        {
+          id: 2,
+          issueType: 'streetlight',
+          description: 'Streetlight flickering all night',
+          severity: 'medium',
+          location: `${city} Residential District`,
+          coordinates: { lat: lat - 0.005, lng: lon - 0.003 },
+          timestamp: '2023-05-14T18:45:00Z',
+          anonymous: true
+        }
+      ];
+      setFeedbacks(mockFeedbacks);
+      updateMarkers(mockFeedbacks);
 
       if (onResult) {
         onResult({ 
@@ -107,6 +161,73 @@ const Map = React.forwardRef(({ city, country, onResult }, ref) => {
     }
   }, [city, country, onResult, defaultZoom]);
 
+  const updateMarkers = (feedbacks) => {
+    const newMarkers = feedbacks.map(feedback => ({
+      position: feedback.coordinates,
+      type: feedback.issueType,
+      severity: feedback.severity,
+      id: feedback.id
+    }));
+    setMarkers(newMarkers);
+  };
+
+  const handleMapClick = (event) => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    
+    const clickedLocation = {
+      lat: event.latLng.lat(),
+      lng: event.latLng.lng()
+    };
+    
+    const locationName = `${city} (${clickedLocation.lat.toFixed(4)}, ${clickedLocation.lng.toFixed(4)})`;
+    setSelectedLocation(locationName);
+    setShowFeedbackForm(true);
+  };
+
+  const handleFeedbackSubmit = (feedback) => {
+    const newFeedback = {
+      ...feedback,
+      id: Date.now(),
+      location: selectedLocation,
+      coordinates: {
+        lat: mapRef.current.getCenter().lat(),
+        lng: mapRef.current.getCenter().lng()
+      },
+      timestamp: new Date().toISOString(),
+      status: 'reported',
+      upvotes: 0,
+      userId: localStorage.getItem('userId') // Store user ID with feedback
+    };
+    
+    setFeedbacks(prev => [newFeedback, ...prev]);
+    updateMarkers([newFeedback, ...feedbacks]);
+    setShowFeedbackForm(false);
+    
+    alert('Thank you for your report! City officials will review it soon.');
+  };
+
+  const getMarkerIcon = (type, severity) => {
+    const baseUrl = 'https://maps.google.com/mapfiles/ms/icons/';
+    const colors = {
+      low: 'green',
+      medium: 'orange',
+      high: 'red'
+    };
+    
+    const icons = {
+      pothole: `${baseUrl}construction.png`,
+      streetlight: `${baseUrl}streetlight.png`,
+      intersection: `${baseUrl}traffic.png`,
+      garbage: `${baseUrl}trash.png`,
+      other: `${baseUrl}info.png`
+    };
+    
+    return icons[type] || `${baseUrl}${colors[severity]}-dot.png`;
+  };
+
   useEffect(() => {
     if (!isLoaded) return;
     fetchData();
@@ -116,22 +237,27 @@ const Map = React.forwardRef(({ city, country, onResult }, ref) => {
     const timer = setTimeout(() => {
       if (mapRef.current) {
         window.google.maps.event.trigger(mapRef.current, 'resize');
-        mapRef.current.panTo(center);
+        // Only pan if not just changing sidebar views
+        if (!activeSidebar) {
+          mapRef.current.panTo(center);
+        }
       }
     }, 350);
     return () => clearTimeout(timer);
-  }, [activeSidebar, center]);
+  }, [center]);
 
   const onLoad = useCallback((map) => {
     mapRef.current = map;
     setMap(map);
+    map.addListener('click', handleMapClick);
+    
     setTimeout(() => {
       if (mapRef.current) {
         window.google.maps.event.trigger(mapRef.current, 'resize');
         mapRef.current.panTo(center);
       }
     }, 100);
-  }, [center]);
+  }, [center, isAuthenticated]); // Added isAuthenticated to dependencies
 
   const onUnmount = useCallback(() => {
     mapRef.current = null;
@@ -181,9 +307,37 @@ const Map = React.forwardRef(({ city, country, onResult }, ref) => {
   if (loadError) return <div className="map-error">Error loading maps</div>;
   if (!isLoaded) return <div className="map-loading">Loading Maps...</div>;
 
-  return (
+ return (
     <div className="map-page-container">
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal 
+          onClose={() => setShowAuthModal(false)}
+          onLoginSuccess={handleLoginSuccess}
+        />
+      )}
+
       <div className="left-panel">
+        <div className="panel-title">Menu</div>
+    
+        {/* Add Profile button */}
+        <div 
+          className={`control-card ${showProfile ? 'active' : ''}`}
+          onClick={() => {
+            if (isAuthenticated) {
+              setShowProfile(!showProfile);
+              setActiveSidebar(null);
+            } else {
+              setShowAuthModal(true);
+            }
+          }}
+        >
+          <div className="control-icon">👤</div>
+          <div className="control-label">
+            {isAuthenticated ? (userData?.username || 'Profile') : 'Login'}
+          </div>
+        </div>
         <div 
           className={`control-card ${activeSidebar === 'weather' ? 'active' : ''}`} 
           onClick={() => toggleSidebar('weather')}
@@ -205,12 +359,17 @@ const Map = React.forwardRef(({ city, country, onResult }, ref) => {
           <div className="control-icon">🚦</div>
           <div className="control-label">Traffic</div>
         </div>
+        <div 
+          className={`control-card ${activeSidebar === 'feedback' ? 'active' : ''}`} 
+          onClick={() => toggleSidebar('feedback')}
+        >
+          <div className="control-icon">📝</div>
+          <div className="control-label">Reports</div>
+        </div>
       </div>
       
-
       <div className={`map-container ${activeSidebar ? 'sidebar-open' : ''}`}>
         <GoogleMap
-          
           mapContainerStyle={{
             width: '100%',
             height: '100%'
@@ -238,6 +397,23 @@ const Map = React.forwardRef(({ city, country, onResult }, ref) => {
           }}
         >
           {showTraffic && <TrafficLayer />}
+          {markers.map((marker, index) => (
+            <Marker
+              key={index}
+              position={marker.position}
+              icon={{
+                url: getMarkerIcon(marker.type, marker.severity),
+                scaledSize: new window.google.maps.Size(32, 32)
+              }}
+              onClick={() => {
+                const feedback = feedbacks.find(f => f.id === marker.id);
+                if (feedback) {
+                  setSelectedLocation(feedback.location);
+                  setShowFeedbackForm(true);
+                }
+              }}
+            />
+          ))}
         </GoogleMap>
       </div>
 
@@ -376,6 +552,90 @@ const Map = React.forwardRef(({ city, country, onResult }, ref) => {
             </div>
           </>
         )}
+
+        {activeSidebar === 'feedback' && (
+          <>
+            <div className="sidebar-header">
+              <h2>City Issues & Reports</h2>
+              <button onClick={() => toggleSidebar('feedback')} className="close-sidebar">
+                &times;
+              </button>
+            </div>
+            <div className="sidebar-content">
+              {showFeedbackForm ? (
+                <FeedbackForm 
+                  onSubmit={handleFeedbackSubmit} 
+                  onCancel={() => setShowFeedbackForm(false)}
+                  location={selectedLocation || `${city} (click on map to select location)`}
+                />
+              ) : (
+                <>
+                  <button 
+                    className="report-issue-btn"
+                    onClick={handleReportClick}
+                  >
+                    Report New Issue
+                  </button>
+                  <FeedbackList feedbacks={feedbacks} city={city} />
+                </>
+              )}
+            </div>
+          </>
+        )}
+
+          {showProfile && isAuthenticated && (
+            <>
+              <div className="sidebar-header">
+                <h2>User Profile</h2>
+                <button onClick={() => setShowProfile(false)} className="close-sidebar">
+                  &times;
+                </button>
+              </div>
+              <div className="sidebar-content">
+                <div className="profile-section">
+                  <div className="profile-info">
+                    <div className="profile-avatar">👤</div>
+                    <div className="profile-details">
+                      <h3>{userData?.username}</h3>
+                      <p>{userData?.email}</p>
+                    </div>
+                  </div>
+                  
+                  <form className="profile-form">
+                    <div className="form-group">
+                      <label>Email</label>
+                      <input 
+                        type="email" 
+                        value={userData?.email || ''} 
+                        onChange={(e) => setUserData({...userData, email: e.target.value})}
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Change Password</label>
+                      <input 
+                        type="password" 
+                        placeholder="New password"
+                      />
+                    </div>
+                    
+                    <div className="form-actions">
+                      <button type="button" className="save-btn">
+                        Save Changes
+                      </button>
+                      <button 
+                        type="button" 
+                        className="logout-btn"
+                        onClick={handleLogout}
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </>
+          )}
       </div>
     </div>
   );

@@ -1,8 +1,7 @@
-"""
-URL configuration for backend project.
+"""backend URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
+    https://docs.djangoproject.com/en/4.0/topics/http/urls/
 Examples:
 Function views
     1. Add an import:  from my_app import views
@@ -16,8 +15,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from accounts import views as auth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('dashboard.urls')),
+
+    path('api/auth/', include([
+        path('register/', auth_views.register, name='register'), 
+        path('login/', auth_views.user_login, name='login'),
+        path('logout/', auth_views.user_logout, name='logout'),
+    ])),
 ]

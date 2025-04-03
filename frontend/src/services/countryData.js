@@ -13,7 +13,6 @@ export const getCountryCapital = async (countryName) => {
       if (!data[0]?.capital?.[0]) {
         throw new Error('Capital information not available');
       }
-      
       return data[0].capital[0];
     } catch (error) {
       console.error('Error in getCountryCapital:', error);

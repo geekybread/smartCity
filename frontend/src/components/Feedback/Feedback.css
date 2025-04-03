@@ -1,0 +1,170 @@
+/* Feedback Form */
+.feedback-form-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .feedback-form-container h3 {
+    margin-top: 0;
+    color: #333;
+  }
+  
+  .location-display {
+    background: #f5f5f5;
+    padding: 8px;
+    border-radius: 4px;
+    margin: 10px 0;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .submit-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .cancel-btn {
+    background-color: #f5f5f5;
+    color: #333;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .submit-btn:hover {
+    background-color: #45a049;
+  }
+  
+  .cancel-btn:hover {
+    background-color: #e0e0e0;
+  }
+  
+  /* Feedback List */
+  .feedback-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    align-items: center;
+  }
+  
+  .filter-control, .sort-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .filter-control select, .sort-control select {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .report-issue-btn {
+    background-color: #2196F3;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+  
+  .report-issue-btn:hover {
+    background-color: #0b7dda;
+  }
+  
+  /* Feedback Item */
+  .feedback-item {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .feedback-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .feedback-icon {
+    font-size: 24px;
+  }
+  
+  .feedback-type {
+    text-transform: capitalize;
+    font-weight: 600;
+    flex-grow: 1;
+  }
+  
+  .feedback-status {
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    text-transform: capitalize;
+  }
+  
+  .feedback-description {
+    margin-bottom: 10px;
+    color: #333;
+    line-height: 1.4;
+  }
+  
+  .feedback-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .upvote-btn {
+    background: #f5f5f5;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .upvote-btn.upvoted {
+    background: #e3f2fd;
+    color: #2196F3;
+  }
+  
+  .upvote-btn:hover:not(.upvoted) {
+    background: #e0e0e0;
+  }
+  
+  .feedback-location-date {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 12px;
+    color: #666;
+  }
+  
+  .feedback-location {
+    font-weight: 500;
+  }
+  
+  .feedback-date {
+    color: #999;
+  }

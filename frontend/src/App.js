@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef} from 'react';
 import Map from './components/Map';
 import './App.css';
 
@@ -15,9 +15,29 @@ function App() {
   const [lastValidSearch, setLastValidSearch] = useState({
     city: 'New Delhi',
     country: 'India'
-  }); // Initialize with default values
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Add this line
   const prevSearchRef = useRef('');
   const mapRef = useRef();
+
+  const [userData, setUserData] = useState(null);
+
+  // Check authentication status on load
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const username = localStorage.getItem('username');
+    const email = localStorage.getItem('email'); // You'll need to store this during login
+    
+    if (token && username) {
+      setIsAuthenticated(true);
+      setUserData({
+        username,
+        email
+      });
+    }
+  }, []);
+  
+
   // Auto-dismiss notification after 2 seconds
   useEffect(() => {
     if (notification) {
@@ -41,7 +61,7 @@ function App() {
       };
 
       setLocation(newLocation);
-      setLastValidSearch(newLocation); // Always update last valid search
+      setLastValidSearch(newLocation);
 
       setNotification({
         type: 'info',
@@ -66,7 +86,6 @@ function App() {
     }
   };
 
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setSearchQuery(prev => ({
@@ -77,7 +96,6 @@ function App() {
 
   const refocusOnLastSearch = () => {
     if (mapRef.current && lastValidSearch) {
-      // Trigger the map to refocus
       mapRef.current.refocus();
       setNotification({
         type: 'info',
@@ -88,9 +106,9 @@ function App() {
 
   return (
     <div className="App">
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <h1>Smart City Dashboard</h1>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <h1>Smart City Dashboard</h1>
+      </div>
 
       {notification && (
         <div className={`notification-banner ${notification.type}`}>
@@ -129,9 +147,14 @@ function App() {
       </form>
 
       <Map 
-        city={location.city} 
+        city={location.city}
         country={location.country}
         onResult={handleMapResult}
+        isAuthenticated={isAuthenticated}
+        setIsAuthenticated={setIsAuthenticated}
+        ref={mapRef}
+        userData={userData}
+        setUserData={setUserData}
       />
     </div>
   );
