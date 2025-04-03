@@ -12,8 +12,12 @@ function App() {
     country: ''
   });
   const [notification, setNotification] = useState(null);
+  const [lastValidSearch, setLastValidSearch] = useState({
+    city: 'New Delhi',
+    country: 'India'
+  }); // Initialize with default values
   const prevSearchRef = useRef('');
-
+  const mapRef = useRef();
   // Auto-dismiss notification after 2 seconds
   useEffect(() => {
     if (notification) {
@@ -31,16 +35,13 @@ function App() {
         throw new Error('Please enter a city or country');
       }
 
-      const currentSearch = `${searchQuery.city}|${searchQuery.country}`;
-      if (prevSearchRef.current === currentSearch) {
-        return; // Skip if same search
-      }
-      prevSearchRef.current = currentSearch;
-
-      setLocation({
+      const newLocation = {
         city: searchQuery.city.trim(),
         country: searchQuery.country.trim()
-      });
+      };
+
+      setLocation(newLocation);
+      setLastValidSearch(newLocation); // Always update last valid search
 
       setNotification({
         type: 'info',
@@ -60,7 +61,11 @@ function App() {
       type: result.success ? 'success' : 'error',
       message: result.message
     });
+    if (result.mapRef) {
+      mapRef.current = result.mapRef;
+    }
   };
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -70,9 +75,22 @@ function App() {
     }));
   };
 
+  const refocusOnLastSearch = () => {
+    if (mapRef.current && lastValidSearch) {
+      // Trigger the map to refocus
+      mapRef.current.refocus();
+      setNotification({
+        type: 'info',
+        message: `Refocusing on ${lastValidSearch.city || lastValidSearch.country}`
+      });
+    }
+  };
+
   return (
     <div className="App">
-      <h1>Smart City Dashboard</h1>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <h1>Smart City Dashboard</h1>
+        </div>
 
       {notification && (
         <div className={`notification-banner ${notification.type}`}>
@@ -81,22 +99,32 @@ function App() {
       )}
 
       <form onSubmit={handleSearch} className="search-bar">
-        <div className="search-fields">
-          <input
-            type="text"
-            name="city"
-            placeholder="City (e.g. Delhi)"
-            value={searchQuery.city}
-            onChange={handleInputChange}
-          />
-          <input
-            type="text"
-            name="country"
-            placeholder="Country (e.g. India)"
-            value={searchQuery.country}
-            onChange={handleInputChange}
-          />
-          <button type="submit">Search</button>
+        <div className="search-container">
+          <div className="search-controls">
+            <button 
+              type="button"
+              className="refocus-button"
+              onClick={refocusOnLastSearch}
+              title="Refocus on last searched location"
+            >
+              <span className="refocus-icon">📍</span>
+            </button>
+            <input
+              type="text"
+              name="city"
+              placeholder="City (e.g. Delhi)"
+              value={searchQuery.city}
+              onChange={handleInputChange}
+            />
+            <input
+              type="text"
+              name="country"
+              placeholder="Country (e.g. India)"
+              value={searchQuery.country}
+              onChange={handleInputChange}
+            />
+            <button type="submit" className="search-button">Search</button>
+          </div>
         </div>
       </form>
 
