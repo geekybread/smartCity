@@ -1,20 +1,36 @@
-import React, { useState, useEffect, useCallback, useRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleMap, useLoadScript, TrafficLayer, Marker } from '@react-google-maps/api';
 import { getWeatherData, getCityCoordinates, getAirQualityData } from '../services/weather';
 import { GOOGLE_MAPS_CONFIG } from './configs/maps';
 import FeedbackForm from '../components/Feedback/FeedbackForm';
 import FeedbackList from '../components/Feedback/FeedbackList';
-import AuthModal from '../components/Auth/AuthModal';
+import { useAuth } from '../context/AuthContext';
 import './Map.css';
+import api from '../services/api';
+import AdminPanel from './Admin/AdminPanel';
+
+
+const loadGoogleMaps = () => {
+  return new Promise((resolve) => {
+    if (window.google && window.google.maps) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = resolve;
+    document.head.appendChild(script);
+  });
+};
+
 
 const Map = React.forwardRef(({ 
   city, 
   country, 
   onResult,
-  isAuthenticated,  // Receive from App.js
-  setIsAuthenticated,
-  userData, 
-  setUserData  // Receive from App.js
 }, ref) => {
   const [weather, setWeather] = useState(null);
   const [airQuality, setAirQuality] = useState(null);
@@ -27,15 +43,10 @@ const Map = React.forwardRef(({
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [markers, setMarkers] = useState([]);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const prevSearchRef = useRef('');
   const mapRef = useRef(null);
-  const [showAccountSettings, setShowAccountSettings] = useState(false);
-  const [newEmail, setNewEmail] = useState('');
-  const [newMobile, setNewMobile] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
+  const { user, isAdmin } = useAuth();
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: GOOGLE_MAPS_CONFIG.apiKey,
@@ -46,115 +57,14 @@ const Map = React.forwardRef(({
   const [zoom, setZoom] = useState(defaultZoom);
 
   const handleReportClick = () => {
-    if (!isAuthenticated) {
-      setShowAuthModal(true);
+    if (!user) {
+      alert('Please login to submit feedback');
       return;
     }
     setSelectedLocation(`${city} (${center.lat.toFixed(4)}, ${center.lng.toFixed(4)})`);
     setShowFeedbackForm(true);
   };
 
-  //handleLoginSuccess to receive and store user data
-  const handleLoginSuccess = (userData) => {
-    setIsAuthenticated(true);
-    setUserData(userData);
-    setShowAuthModal(false);
-    localStorage.setItem('userData', JSON.stringify(userData));
-  };
-
-  //handleLogout to call backend
-  const handleLogout = async () => {
-    try {
-      await fetch('http://localhost:8000/api/auth/logout/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userData');
-      setIsAuthenticated(false);
-      setUserData(null);
-      setActiveSidebar(null);
-    }
-  };
-
-  //useEffect to load user data on mount
-useEffect(() => {
-  const storedData = localStorage.getItem('userData');
-  if (storedData) {
-    setUserData(JSON.parse(storedData));
-  }
-}, []);
-
-
-  const handleUpdateAccount = async () => {
-
-    try {
-      if (newPassword && newPassword !== confirmPassword) {
-        throw new Error('Passwords do not match');
-      }
-  
-      if (!newEmail && !newMobile && !newPassword) {
-        throw new Error('No changes made');
-      }
-
-    try {
-      setIsLoading(true);
-      
-      const updates = {};
-      if (newEmail && newEmail !== userData.email) updates.email = newEmail;
-      if (newMobile && newMobile !== userData.mobile) updates.mobile = newMobile;
-      if (newPassword && newPassword === confirmPassword) updates.password = newPassword;
-
-      if (Object.keys(updates).length === 0) {
-        throw new Error('No changes detected');
-      }
-
-      const response = await fetch('http://localhost:8000/api/auth/update/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify(updates)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Update failed');
-      }
-
-      // Update local storage and state
-      const updatedUserData = {
-        ...userData,
-        email: data.user.email || userData.email,
-        mobile: data.user.mobile || userData.mobile
-      };
-      localStorage.setItem('userData', JSON.stringify(updatedUserData));
-      setUserData(updatedUserData);
-      
-      // Reset form fields
-      setNewEmail('');
-      setNewMobile('');
-      setNewPassword('');
-      setConfirmPassword('');
-      
-      alert(data.message || 'Account updated successfully!');
-    } catch (error) {
-      alert(error.message || 'Failed to update account');
-    } finally {
-      setIsLoading(false);
-    }
-  } catch (error) {
-    alert(error.message);
-    setIsLoading(false);
-  }
-};
 
 
   const fetchData = useCallback(async () => {
@@ -179,13 +89,13 @@ useEffect(() => {
         getAirQualityData(lat, lon).catch(error => {
           console.error('Air quality API error:', error);
           return null;
-        })
+        }),
+        fetchFeedbackReports()
       ]);
 
       setWeather(weatherData);
       setAirQuality(airQualityData);
 
-      // Load feedbacks for this city (mock data for now)
       const mockFeedbacks = [
         {
           id: 1,
@@ -256,10 +166,17 @@ useEffect(() => {
     }
   }, [city, country, onResult, defaultZoom]);
 
-  const updateMarkers = (feedbacks) => {
-    const newMarkers = feedbacks.map(feedback => ({
-      position: feedback.coordinates,
-      type: feedback.issueType,
+  const updateMarkers = (feedbackData) => {
+    const newMarkers = feedbackData.map(feedback => ({
+      position: { 
+        lat: typeof feedback.latitude === 'number' ? 
+          feedback.latitude : 
+          parseFloat(feedback.latitude),
+        lng: typeof feedback.longitude === 'number' ? 
+          feedback.longitude : 
+          parseFloat(feedback.longitude)
+      },
+      type: feedback.issue_type,
       severity: feedback.severity,
       id: feedback.id
     }));
@@ -267,11 +184,6 @@ useEffect(() => {
   };
 
   const handleMapClick = (event) => {
-    if (!isAuthenticated) {
-      setShowAuthModal(true);
-      return;
-    }
-    
     const clickedLocation = {
       lat: event.latLng.lat(),
       lng: event.latLng.lng()
@@ -282,27 +194,51 @@ useEffect(() => {
     setShowFeedbackForm(true);
   };
 
-  const handleFeedbackSubmit = (feedback) => {
-    const newFeedback = {
-      ...feedback,
-      id: Date.now(),
-      location: selectedLocation,
-      coordinates: {
-        lat: mapRef.current.getCenter().lat(),
-        lng: mapRef.current.getCenter().lng()
-      },
-      timestamp: new Date().toISOString(),
-      status: 'reported',
-      upvotes: 0,
-      userId: localStorage.getItem('userId') // Store user ID with feedback
-    };
-    
-    setFeedbacks(prev => [newFeedback, ...prev]);
-    updateMarkers([newFeedback, ...feedbacks]);
-    setShowFeedbackForm(false);
-    
-    alert('Thank you for your report! City officials will review it soon.');
+  const handleFeedbackSubmit = async (feedback) => {
+    try {
+      if (!user) {
+        alert('Please login to submit feedback');
+        return;
+      }
+  
+      const coordinates = mapRef.current.getCenter();
+      const newFeedback = {
+        ...feedback, // Add user reference
+        id: `feedback-${Date.now()}`,
+        location_name: selectedLocation || `${city} (${coordinates.lat().toFixed(4)}, ${coordinates.lng().toFixed(4)})`,
+        latitude: coordinates.lat(),
+        longitude: coordinates.lng()
+      };
+  
+      // Send to backend
+      const response = await api.post('/api/feedback/', newFeedback, {
+        headers: { Authorization: `Token ${localStorage.getItem('token')}` }
+      });
+  
+      setFeedbacks(prev => [response.data, ...prev]);
+      updateMarkers([response.data, ...feedbacks]);
+      setShowFeedbackForm(false);
+      alert('Thank you for your report!');
+    } catch (error) {
+      console.error('Feedback submission error:', error);
+      alert('Failed to submit feedback');
+    }
   };
+
+
+  const fetchFeedbackReports = useCallback(async () => {
+    try {
+      const response = await api.get(`/api/feedback/?city=${encodeURIComponent(city)}`, {
+        headers: user ? { Authorization: `Token ${localStorage.getItem('token')}` } : {}
+      });
+      setFeedbacks(response.data);
+      updateMarkers(response.data);
+    } catch (error) {
+      console.error('Error loading feedback:', error);
+      setFeedbacks([]);
+    }
+  }, [city, user]);
+
 
   const getMarkerIcon = (type, severity) => {
     const baseUrl = 'https://maps.google.com/mapfiles/ms/icons/';
@@ -326,13 +262,12 @@ useEffect(() => {
   useEffect(() => {
     if (!isLoaded) return;
     fetchData();
-  }, [isLoaded, fetchData, city, country]);
+  }, [isLoaded, fetchData, city, country, fetchFeedbackReports]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (mapRef.current) {
         window.google.maps.event.trigger(mapRef.current, 'resize');
-        // Only pan if not just changing sidebar views
         if (!activeSidebar) {
           mapRef.current.panTo(center);
         }
@@ -352,7 +287,7 @@ useEffect(() => {
         mapRef.current.panTo(center);
       }
     }, 100);
-  }, [center, isAuthenticated]); // Added isAuthenticated to dependencies
+  }, [center]);
 
   const onUnmount = useCallback(() => {
     mapRef.current = null;
@@ -403,32 +338,21 @@ useEffect(() => {
   if (loadError) return <div className="map-error">Error loading maps</div>;
   if (!isLoaded) return <div className="map-loading">Loading Maps...</div>;
 
- return (
+  return (
     <div className="map-page-container">
-
-      {/* Auth Modal */}
-      {showAuthModal && (
-        <AuthModal 
-          onClose={() => setShowAuthModal(false)}
-          onLoginSuccess={handleLoginSuccess}
-        />
-      )}
-
       <div className="left-panel">
-      <div className="panel-title">Menu</div>
-  
-        {/* Profile Button - Always visible */}
-        <div 
-          className={`control-card ${activeSidebar === 'profile' ? 'active' : ''}`}
-          onClick={() => {
-            setActiveSidebar(activeSidebar === 'profile' ? null : 'profile');
-            setShowFeedbackForm(false);
-          }}
-        >
-          <div className="control-icon">👤</div>
-          <div className="control-label">Profile</div>
-        </div>
+        <div className="panel-title">Menu</div>
 
+        {isAdmin && (
+          <div 
+            className={`control-card ${activeSidebar === 'admin' ? 'active' : ''}`} 
+            onClick={() => toggleSidebar('admin')}
+          >
+            <div className="control-icon">🛠️</div>
+            <div className="control-label">Admin</div>
+          </div>
+        )}
+  
         <div 
           className={`control-card ${activeSidebar === 'weather' ? 'active' : ''}`} 
           onClick={() => toggleSidebar('weather')}
@@ -488,9 +412,9 @@ useEffect(() => {
           }}
         >
           {showTraffic && <TrafficLayer />}
-          {markers.map((marker, index) => (
+          {markers.map((marker) => (
             <Marker
-              key={index}
+              key={marker.id}
               position={marker.position}
               icon={{
                 url: getMarkerIcon(marker.type, marker.severity),
@@ -510,131 +434,19 @@ useEffect(() => {
 
       <div className={`right-sidebar ${activeSidebar ? 'active' : ''}`}>
 
-
-      {activeSidebar === 'profile' && (
-        <div className="profile-sidebar">
-          <div className="sidebar-header">
-            <h2>{isAuthenticated ? `${userData?.name || 'My Profile'}` : 'Account'}</h2>
-            <button onClick={() => setActiveSidebar(null)} className="close-sidebar">
-              &times;
-            </button>
-          </div>
-          <div className="sidebar-content">
-            {isAuthenticated ? (
-              <div className="profile-view">
-                <div className="profile-header">
-                  <div className="profile-avatar">
-                    {userData?.name?.charAt(0).toUpperCase() || userData?.username?.charAt(0).toUpperCase() || '👤'}
-                  </div>
-                  <div className="profile-info">
-                    <h3>{userData?.name}</h3>
-                    <p>@{userData?.username}</p>
-                  </div>
-                </div>
-
-                {/* Account Information Section */}
-                <div className="account-info-section">
-                  <h4>Account Information</h4>
-                  <div className="info-group">
-                    <label>Full Name</label>
-                    <div className="info-value">{userData?.name || '-'}</div>
-                  </div>
-                  <div className="info-group">
-                    <label>Username</label>
-                    <div className="info-value">@{userData?.username || '-'}</div>
-                  </div>
-                  <div className="info-group">
-                    <label>Email</label>
-                    <div className="info-value">{userData?.email || '-'}</div>
-                  </div>
-                  <div className="info-group">
-                    <label>Mobile Number</label>
-                    <div className="info-value">{userData?.mobile || '-'}</div>
-                  </div>
-                </div>
-
-                {/* Account Settings Button */}
-                <button 
-                  className="settings-toggle-btn"
-                  onClick={() => setShowAccountSettings(!showAccountSettings)}
-                >
-                  {showAccountSettings ? 'Hide Settings' : 'Account Settings'}
-                </button>
-
-                {/* Account Settings Section (Collapsible) */}
-                {showAccountSettings && (
-                  <div className="account-settings-section">
-                    <h4>Update Account</h4>
-                    <div className="form-group">
-                      <label>New Email</label>
-                      <input
-                        type="email"
-                        value={newEmail}
-                        onChange={(e) => setNewEmail(e.target.value)}
-                        placeholder="Enter new email"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>New Mobile Number</label>
-                      <input
-                        type="tel"
-                        value={newMobile}
-                        onChange={(e) => setNewMobile(e.target.value)}
-                        placeholder="Enter new mobile"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Change Password</label>
-                      <input
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="New password"
-                      />
-                      <input
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Confirm new password"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div className="profile-actions">
-                      <button className="save-btn" onClick={handleUpdateAccount}>
-                        Save Changes
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="logout-section">
-                  <button 
-                    className="logout-btn"
-                    onClick={handleLogout}
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="auth-options">
-                <h3>Login to your account</h3>
-                <p>Access your profile and personalized features</p>
-                <button 
-                  className="login-btn"
-                  onClick={() => {
-                    setShowAuthModal(true);
-                    setActiveSidebar(null);
-                  }}
-                >
-                  Login / Register
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
+        {activeSidebar === 'admin' && isAdmin && (
+          <>
+            <div className="sidebar-header">
+              <h2>Admin Dashboard</h2>
+              <button onClick={() => toggleSidebar('admin')} className="close-sidebar">
+                &times;
+              </button>
+            </div>
+            <div className="sidebar-content">
+              <AdminPanel feedbacks={feedbacks} />
+            </div>
+          </>
+        )}
 
         {activeSidebar === 'weather' && weather && (
           <>
@@ -678,7 +490,6 @@ useEffect(() => {
             </div>
           </>
         )}
-
 
         {activeSidebar === 'airQuality' && (
           <>
@@ -795,7 +606,11 @@ useEffect(() => {
                   >
                     Report New Issue
                   </button>
-                  <FeedbackList feedbacks={feedbacks} city={city} />
+                  <FeedbackList 
+                    feedbacks={feedbacks} 
+                    city={city}
+                    isAdmin={isAdmin} // Pass admin status
+                  />
                 </>
               )}
             </div>

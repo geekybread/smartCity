@@ -72,6 +72,22 @@
     border-radius: 4px;
   }
   
+  .filter-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  
+  .filter-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .filter-control label {
+    white-space: nowrap;
+  }
+
   .report-issue-btn {
     background-color: #2196F3;
     color: white;
@@ -167,4 +183,66 @@
   
   .feedback-date {
     color: #999;
+  }
+
+
+  .admin-controls {
+    margin-top: 15px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #6c757d;
+  }
+  
+  .status-control {
+    margin-bottom: 10px;
+  }
+  
+  .status-control label {
+    margin-right: 8px;
+  }
+  
+  .status-control select {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+  }
+  
+  .admin-response {
+    margin-top: 10px;
+  }
+  
+  .admin-response textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+  }
+  
+  .admin-response button {
+    margin-right: 8px;
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .admin-response button:hover {
+    background-color: #0056b3;
+  }
+  
+  .official-response {
+    background-color: #e9ecef;
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  
+  .upvote-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }

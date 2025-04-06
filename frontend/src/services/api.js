@@ -1,94 +1,83 @@
-const API_BASE = 'http://localhost:8000/api/auth';
+import axios from 'axios';
+import Cookies from 'js-cookie';  // For CSRF tokens
 
-export const login = async (credentials) => {
+const refreshToken = async () => {
   try {
-    const response = await fetch(`${API_BASE}/login/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: credentials.username,
-        password: credentials.password
-      })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Login failed');
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Login error:', error);
-    throw error;
+    const response = await axios.post(
+      'http://localhost:8000/api/auth/token/refresh/',
+      { refresh: localStorage.getItem('refresh_token') },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    return response.data.access;
+  } catch (err) {
+    throw new Error('Token refresh failed');
   }
 };
 
-export const register = async (userData) => {
-  try {
-    const response = await fetch(`${API_BASE}/register/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: userData.username,
-        password: userData.password,
-        email: userData.email,
-        name: userData.name,
-        mobile: userData.mobile
-      })
-    });
+const api = axios.create({
+  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Registration failed');
-    }
+// Request interceptor
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  const csrfToken = Cookies.get('csrftoken');
 
-    return await response.json();
-  } catch (error) {
-    console.error('Registration error:', error);
-    throw error;
+  if (token) {
+    config.headers.Authorization = `Token ${token}`;
   }
-};
-
-export const updateAccount = async (updates, token) => {
-  try {
-    const response = await fetch(`${API_BASE}/update/`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
-      },
-      body: JSON.stringify(updates)
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Update failed');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Update error:', error);
-    throw error;
+  if (csrfToken) {
+    config.headers['X-CSRFToken'] = csrfToken;
   }
-};
+  return config;
+});
 
-export const logout = async (token) => {
-  try {
-    const response = await fetch(`${API_BASE}/logout/`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+// Response interceptor
+api.interceptors.response.use(
+  response => response,
+  async error => {
+    if (error.response?.status === 401) {
+      const originalRequest = error.config;
+      const token = localStorage.getItem('token');
+
+      // Attempt token refresh if possible
+      if (token && !originalRequest._retry) {
+        originalRequest._retry = true;
+        try {
+          const newToken = await refreshToken();  // Implement this
+          localStorage.setItem('token', newToken);
+          return api(originalRequest);
+        } catch (refreshError) {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }
+      } else {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
       }
-    });
-    
-    if (!response.ok) {
-      throw new Error('Logout failed');
     }
-    
-    return true;
-  } catch (error) {
-    console.error('Logout error:', error);
-    throw error;
+
+    // Global error handling (e.g., show toast)
+    const errorMessage = error.response?.data?.message || 'Request failed';
+    console.error('API Error:', errorMessage);
+    return Promise.reject(error);
   }
-};
+);
+
+// Dev-only logging
+if (process.env.NODE_ENV === 'development') {
+  api.interceptors.request.use(request => {
+    console.log('Request:', request);
+    return request;
+  });
+  api.interceptors.response.use(response => {
+    console.log('Response:', response);
+    return response;
+  });
+}
+
+export default api;

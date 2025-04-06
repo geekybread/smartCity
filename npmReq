@@ -1,0 +1,3 @@
+npm install @react-oauth/google jwt-decode
+npm install @react-oauth/google axios react-router-dom
+npm install http-proxy-middleware

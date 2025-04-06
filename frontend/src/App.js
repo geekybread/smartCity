@@ -1,6 +1,18 @@
-import React, { useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { AuthProvider } from './context/AuthContext';
+import GoogleAuth from './components/Auth/GoogleLogin';
 import Map from './components/Map';
 import './App.css';
+import axios from 'axios';
+
+axios.defaults.baseURL = process.env.REACT_APP_API_BASE_URL;
+axios.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Token ${token}`;
+  }
+  return config;
+});
 
 function App() {
   const [location, setLocation] = useState({
@@ -16,22 +28,8 @@ function App() {
     city: 'New Delhi',
     country: 'India'
   });
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Add this line
   const prevSearchRef = useRef('');
   const mapRef = useRef();
-
-  const [userData, setUserData] = useState(null);
-
-  // Check authentication status on load
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    const userData = JSON.parse(localStorage.getItem('userData'));
-    
-    if (token && userData) {
-      setIsAuthenticated(true);
-      setUserData(userData);
-    }
-  }, []);
 
   // Auto-dismiss notification after 2 seconds
   useEffect(() => {
@@ -42,35 +40,6 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [notification]);
-
-  const handleLoginSuccess = (userData) => {
-    setIsAuthenticated(true);
-    setUserData(userData);
-    setNotification({
-      type: 'success',
-      message: 'Login successful'
-    });
-  };
-
-  const handleLogout = async () => {
-    try {
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        await fetch('http://localhost:8000/api/auth/logout/', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.clear();
-      setIsAuthenticated(false);
-      setUserData(null);
-    }
-  };
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -129,7 +98,8 @@ function App() {
   };
 
   return (
-    <div className="App">
+    <AuthProvider>
+      <div className="App">
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <h1>Smart City Dashboard</h1>
       </div>
@@ -139,6 +109,12 @@ function App() {
           <span>{notification.message}</span>
         </div>
       )}
+
+
+      <div className="auth-controls">
+          <GoogleAuth />
+          <GoogleAuth isAdminLogin={true} />
+      </div>
 
       <form onSubmit={handleSearch} className="search-bar">
         <div className="search-container">
@@ -171,18 +147,13 @@ function App() {
       </form>
 
       <Map 
-        city={location.city}
-        country={location.country}
-        onResult={handleMapResult}
-        isAuthenticated={isAuthenticated}
-        setIsAuthenticated={setIsAuthenticated}
-        ref={mapRef}
-        userData={userData}
-        setUserData={setUserData}
-        onLoginSuccess={handleLoginSuccess}
-        onLogout={handleLogout}
-      />
-    </div>
+          city={location.city}
+          country={location.country}
+          onResult={handleMapResult}
+          ref={mapRef}
+        />
+      </div>
+    </AuthProvider>
   );
 }
 
