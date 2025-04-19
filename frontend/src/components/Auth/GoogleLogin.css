@@ -1,0 +1,30 @@
+.google-auth-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
+  }
+  
+  .google-auth-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    font-weight: 500;
+    margin: 10px 0;
+  }
+  
+  .logout-btn {
+    background-color: #d32f2f;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  
+  .logout-btn:hover {
+    background-color: #b71c1c;
+  }
+  

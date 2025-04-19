@@ -246,3 +246,10 @@
     opacity: 0.6;
     cursor: not-allowed;
   }
+
+  .upvote-btn.upvoted {
+    color: gray;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  

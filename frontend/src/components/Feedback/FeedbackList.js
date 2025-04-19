@@ -1,26 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import FeedbackItem from './FeedbackItem';
 import './Feedback.css';
-import api from '../../services/api'; // Import your axios instance
+import api from '../../services/api'; 
 
-const FeedbackList = ({ city }) => { // Removed `feedbacks` prop (now fetched internally)
+const FeedbackList = ({ city }) => { 
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
 
-  // Fetch data from backend
   useEffect(() => {
     const fetchFeedbacks = async () => {
       try {
-        const response = await api.get('/api/feedback/');
-        // Transform backend data to match frontend structure
+        setLoading(true);
+        setError(null);
+        const response = await api.get(`/api/feedback/?city=${encodeURIComponent(city)}`);
         const transformedData = response.data.map(item => ({
           ...item,
-          id: item.id,  // Backend: id → Frontend: id
-          issueType: item.issue_type,  // Backend: issue_type → Frontend: issueType
-          timestamp: item.created_at,  // Backend: created_at → Frontend: timestamp
+          issueType: item.issue_type,
+          timestamp: item.created_at,
         }));
         setFeedbacks(transformedData);
       } catch (err) {
@@ -30,18 +29,19 @@ const FeedbackList = ({ city }) => { // Removed `feedbacks` prop (now fetched in
       }
     };
 
-    fetchFeedbacks();
-  }, []);
+    if (city) {
+      fetchFeedbacks();
+    }
+  }, [city]);
 
-  // Filter and sort logic
   const filteredFeedbacks = feedbacks.filter(feedback => {
     if (filter === 'all') return true;
-    return feedback.issue_type === filter; // Use original field for filtering
+    return feedback.issueType === filter;
   });
 
   const sortedFeedbacks = [...filteredFeedbacks].sort((a, b) => {
     if (sortBy === 'recent') {
-      return new Date(b.created_at) - new Date(a.created_at); // Sort by original field
+      return new Date(b.timestamp) - new Date(a.timestamp);
     }
     return 0;
   });
@@ -87,12 +87,7 @@ const FeedbackList = ({ city }) => { // Removed `feedbacks` prop (now fetched in
           {sortedFeedbacks.map((feedback) => (
             <FeedbackItem 
               key={feedback.id} 
-              feedback={{
-                ...feedback,
-                // Ensure FeedbackItem receives expected props:
-                issueType: feedback.issue_type, // Transform again if needed
-                timestamp: feedback.created_at
-              }} 
+              feedback={feedback}
             />
           ))}
         </div>

@@ -93,8 +93,7 @@ export const getWeatherData = async (lat, lon) => {
   return data;
 };
 
-// Add this function to your weather services file
-// Replace getAirQualityData function with:
+
 export const getAirQualityData = async (lat, lng) => {  
   const url = `https://api.waqi.info/feed/geo:${lat};${lng}/?token=${token}`;
   

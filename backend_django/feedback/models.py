@@ -1,33 +1,37 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
+from django.conf import settings
+
+ISSUE_TYPES = [
+    ('pothole', 'Pothole'),
+    ('streetlight', 'Street Light'),
+    ('garbage', 'Garbage'),
+    ('other', 'Other'),
+]
+
+SEVERITY_LEVELS = [
+    ('low', 'Low'),
+    ('medium', 'Medium'),
+    ('high', 'High'),
+]
+
+STATUS_CHOICES = [
+    ('reported', 'Reported'),
+    ('in_progress', 'In Progress'),
+    ('resolved', 'Resolved'),
+]
 
 class FeedbackReport(models.Model):
-    ISSUE_TYPES = [
-        ('pothole', 'Pothole'),
-        ('streetlight', 'Street Light'),
-        ('garbage', 'Garbage'),
-        ('other', 'Other'),
-    ]
-    
-    SEVERITY_LEVELS = [
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-    ]
-
-    STATUS_CHOICES = [
-        ('reported', 'Reported'),
-        ('in_progress', 'In Progress'),
-        ('resolved', 'Resolved'),
-    ]
-
     user = models.ForeignKey(
-        get_user_model(), 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        get_user_model(),
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
-        verbose_name="Reported by"
+        verbose_name="Reported by",
+        related_name='feedback_reports'
     )
+
     issue_type = models.CharField(max_length=20, choices=ISSUE_TYPES)
     description = models.TextField()
     severity = models.CharField(max_length=10, choices=SEVERITY_LEVELS, default='medium')
@@ -35,13 +39,18 @@ class FeedbackReport(models.Model):
     latitude = models.DecimalField(max_digits=10, decimal_places=7)
     longitude = models.DecimalField(max_digits=10, decimal_places=7)
     created_at = models.DateTimeField(auto_now_add=True)
-    #is_anonymous = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='reported')
     admin_response = models.TextField(blank=True, default="")
     upvotes = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return f"{self.get_issue_type_display()} at {self.location_name} ({self.get_status_display()})"
+
+    def clean(self):
+        if not -90 <= float(self.latitude) <= 90:
+            raise ValidationError("Latitude must be between -90 and 90.")
+        if not -180 <= float(self.longitude) <= 180:
+            raise ValidationError("Longitude must be between -180 and 180.")
 
     class Meta:
         ordering = ['-created_at']
@@ -52,8 +61,17 @@ class FeedbackReport(models.Model):
             models.Index(fields=['latitude', 'longitude']),
         ]
 
-    def clean(self):
-        if not -90 <= float(self.latitude) <= 90:
-            raise ValidationError("Latitude must be between -90 and 90.")
-        if not -180 <= float(self.longitude) <= 180:
-            raise ValidationError("Longitude must be between -180 and 180.")
+
+
+class FeedbackUpvote(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    feedback = models.ForeignKey('FeedbackReport', on_delete=models.CASCADE, related_name='upvotes_set')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'feedback')
+        verbose_name = 'Feedback Upvote'
+        verbose_name_plural = 'Feedback Upvotes'
+
+    def __str__(self):
+        return f"{self.user} upvoted {self.feedback}"

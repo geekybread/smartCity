@@ -1,44 +1,59 @@
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import './GoogleLogin.css';  // Make sure this CSS file exists
 
+const GoogleAuth = () => {
+  const { user, login, logout } = useAuth();
 
-const GoogleAuth = ({ isAdminLogin = false }) => {
-    const { login } = useAuth();
+  const handleSuccess = async (credentialResponse) => {
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/auth/google/`,
+        {
+          id_token: credentialResponse.credential,
+          provider: "google"
+        },
+        { withCredentials: true }
+      );
 
-    const handleSuccess = async (credentialResponse) => {
-        try {
-            const response = await axios.post(
-                `${process.env.REACT_APP_API_BASE_URL}/api/auth/google/`,
-                {
-                    id_token: credentialResponse.credential,
-                    provider: "google",
-                    is_admin_login: isAdminLogin
-                },
-                { withCredentials: true }
-            );
-            localStorage.setItem('token', response.data.key);
-            login(response.data.key, isAdminLogin);
-        } catch (error) {
-            console.error('Login failed:', error);
-        }
-    };
+      localStorage.setItem('token', response.data.key);
+      login(response.data.key);
+      toast.success("✅ Logged in successfully!");
+    } catch (error) {
+      console.error('Login failed:', error);
+      toast.error("❌ Login failed");
+    }
+  };
 
-    return (
-        <GoogleOAuthProvider 
-            clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
-            redirectUri={window.location.origin}
-        >
-            <GoogleLogin
-                onSuccess={handleSuccess}
-                onError={() => console.log('Login Failed')}
-                text={isAdminLogin ? "signin_with" : "continue_with"}
-                theme={isAdminLogin ? "filled_blue" : "outline"}
-                ux_mode="popup"  // Add this line
-                cookie_policy="single_host_origin"
-            />
-        </GoogleOAuthProvider>
-    );
+  return (
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}>
+      {!user ? (
+        <div className="google-auth-wrapper">
+          <GoogleLogin
+            onSuccess={handleSuccess}
+            onError={() => toast.error("❌ Google Login Failed")}
+            ux_mode="popup"
+            cookie_policy="single_host_origin"
+            theme="outline"
+            size="large"
+          />
+        </div>
+      ) : (
+        <div className="google-auth-user-info">
+          <span className="user-email">👤 {user.email}</span>
+          <button className="logout-btn" onClick={() => {
+            logout();
+            toast.info("🔓 Logged out");
+          }}>
+            Logout
+          </button>
+        </div>
+      )}
+    </GoogleOAuthProvider>
+  );
 };
 
 export default GoogleAuth;
