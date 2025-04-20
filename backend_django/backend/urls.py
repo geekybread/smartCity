@@ -12,10 +12,13 @@ from feedback.views import (
     UpvoteFeedback
 )
 from alerts.views import EmergencyAlertViewSet  # ✅ import the alert viewset
+from accidentzones.views import AccidentZoneViewSet  # ✅ import the accident zone viewset
 
 # Create a router for API endpoints
 router = DefaultRouter()
-router.register('alerts', EmergencyAlertViewSet, basename='alerts')  # ✅ register alert endpoint
+router.register(r'emergency-alerts', EmergencyAlertViewSet, basename='emergency-alert')
+router.register(r'accident-zones', AccidentZoneViewSet, basename='accident-zone')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),

@@ -1,3 +1,5 @@
+// src/components/Map/Sidebar/FeedbackSidebar.js
+
 import React, { useEffect, useState } from 'react';
 import FeedbackForm from '../../Feedback/FeedbackForm';
 import FeedbackList from '../../Feedback/FeedbackList';
@@ -20,7 +22,6 @@ export default function FeedbackSidebar({
       const fetchFeedbacks = async () => {
         try {
           setLoading(true);
-          console.log('📍 Fetching feedbacks for city:', city);
           const response = await api.get(`/api/feedback/?city=${encodeURIComponent(city)}`);
           setFeedbacks(response.data);
         } catch (err) {

@@ -1,78 +1,61 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+// src/context/AuthContext.js
 
-const AuthContext = createContext();
+import { createContext, useContext, useState, useEffect } from 'react'
+import axios from 'axios'
+
+const AuthContext = createContext()
 
 axios.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Token ${token}`;
-  }
-  return config;
-});
+  const token = localStorage.getItem('token')
+  if (token) config.headers.Authorization = `Token ${token}`
+  return config
+})
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      checkAuthStatus();
-    } else {
-      setLoading(false); // ensure loading stops if no token
-    }
-  }, []);
-  
+    const token = localStorage.getItem('token')
+    if (token) checkAuthStatus()
+    else setLoading(false)
+  }, [])
 
   const checkAuthStatus = async () => {
     try {
-      const response = await axios.get(
+      const { data } = await axios.get(
         `${process.env.REACT_APP_API_BASE_URL}/api/auth/status/`,
         { withCredentials: true }
-      );
-
-      // Store user info
-      setUser({
-        email: response.data.email,
-        name: response.data.name || null
-      });
-
-    } catch (error) {
-      if (error.response?.status === 401) {
-        localStorage.removeItem('token');
-      }
-      setUser(null);
+      )
+      setUser({ email: data.email, name: data.name || null })
+    } catch {
+      localStorage.removeItem('token')
+      setUser(null)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const login = (token) => {
-    localStorage.setItem('token', token);
-    checkAuthStatus();
-  };
+  const login = (token, userData = null) => {
+    localStorage.setItem('token', token)
+    if (userData) {
+      setUser(userData)
+      setLoading(false)
+    } else {
+      checkAuthStatus()
+    }
+  }
 
   const logout = () => {
-    const email = user?.email;
-    if (email) {
-      localStorage.removeItem(`upvotedFeedbacks_${email}`);
-    }
-    localStorage.removeItem('token');
-    setUser(null);
-  };
+    localStorage.removeItem('token')
+    setUser(null)
+  }
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      loading,
-      login,
-      logout,
-      checkAuthStatus
-    }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
-  );
-};
+  )
+}
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext)

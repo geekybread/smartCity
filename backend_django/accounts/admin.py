@@ -1,11 +1,12 @@
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
+# backend/accounts/serializers.py
+
+from dj_rest_auth.registration.serializers import SocialLoginSerializer
+from rest_framework import serializers
 from .models import CustomUser
+from .serializers import UserSerializer  # assumes you have one
 
-class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'is_staff')
-    fieldsets = UserAdmin.fieldsets + (
-        ('Custom Fields', {'fields': ('user_type', 'phone')}),
-    )
-
-admin.site.register(CustomUser, CustomUserAdmin)
+class GoogleLoginSerializer(SocialLoginSerializer):
+    def get_response_data(self, user):
+        data = super().get_response_data(user)  # e.g. { "key": "<token>" }
+        data['user'] = UserSerializer(user).data
+        return data

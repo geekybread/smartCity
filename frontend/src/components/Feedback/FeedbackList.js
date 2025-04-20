@@ -1,3 +1,5 @@
+// src/components/Feedback/FeedbackList.js
+
 import React, { useState, useEffect } from 'react';
 import FeedbackItem from './FeedbackItem';
 import './Feedback.css';
@@ -7,8 +9,8 @@ const FeedbackList = ({ city }) => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('recent');
+  const [issueFilter, setIssueFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all'); // New filter for progress/status
 
   useEffect(() => {
     const fetchFeedbacks = async () => {
@@ -20,6 +22,7 @@ const FeedbackList = ({ city }) => {
           ...item,
           issueType: item.issue_type,
           timestamp: item.created_at,
+          status: item.status || 'In Progress'  // fallback if status is missing
         }));
         setFeedbacks(transformedData);
       } catch (err) {
@@ -35,15 +38,9 @@ const FeedbackList = ({ city }) => {
   }, [city]);
 
   const filteredFeedbacks = feedbacks.filter(feedback => {
-    if (filter === 'all') return true;
-    return feedback.issueType === filter;
-  });
-
-  const sortedFeedbacks = [...filteredFeedbacks].sort((a, b) => {
-    if (sortBy === 'recent') {
-      return new Date(b.timestamp) - new Date(a.timestamp);
-    }
-    return 0;
+    const issueMatch = issueFilter === 'all' || feedback.issueType === issueFilter;
+    const statusMatch = statusFilter === 'all' || feedback.status === statusFilter;
+    return issueMatch && statusMatch;
   });
 
   const issueTypes = [
@@ -55,6 +52,14 @@ const FeedbackList = ({ city }) => {
     { value: 'other', label: 'Other' }
   ];
 
+  const progressStatuses = [
+    { value: 'all', label: 'All Statuses' },
+    { value: 'reported', label: 'Reported' },
+    { value: 'in_progress', label: 'In Progress' },
+    { value: 'resolved', label: 'Resolved' }
+  ];
+  
+
   if (loading) return <div className="loading">Loading...</div>;
   if (error) return <div className="error">Error: {error}</div>;
 
@@ -62,29 +67,31 @@ const FeedbackList = ({ city }) => {
     <div className="feedback-list">
       <div className="feedback-controls">
         <div className="filter-control">
-          <label>Filter by:</label>
-          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+          <label>Filter by Issue:</label>
+          <select value={issueFilter} onChange={(e) => setIssueFilter(e.target.value)}>
             {issueTypes.map(type => (
               <option key={type.value} value={type.value}>{type.label}</option>
             ))}
           </select>
         </div>
-        
-        <div className="sort-control">
-          <label>Sort by:</label>
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="recent">Most Recent</option>
+
+        <div className="progress-control">
+          <label>Progress:</label>
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            {progressStatuses.map(status => (
+              <option key={status.value} value={status.value}>{status.label}</option>
+            ))}
           </select>
         </div>
       </div>
 
-      {sortedFeedbacks.length === 0 ? (
+      {filteredFeedbacks.length === 0 ? (
         <div className="no-feedbacks">
-          No {filter === 'all' ? '' : filter + ' '}issues reported for {city} yet.
+          No matching reports for {city}.
         </div>
       ) : (
         <div className="feedback-items">
-          {sortedFeedbacks.map((feedback) => (
+          {filteredFeedbacks.map((feedback) => (
             <FeedbackItem 
               key={feedback.id} 
               feedback={feedback}

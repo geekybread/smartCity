@@ -1,12 +1,15 @@
-import React from 'react';
+// src/components/Map/ControlPanel.js
+
+import React from 'react'
 
 const controls = [
-  { name: 'weather', icon: '☀️', label: 'Weather' },
-  { name: 'airQuality', icon: '🌫️', label: 'Air Quality' },
-  { name: 'traffic', icon: '🚦', label: 'Traffic' },
-  { name: 'feedback', icon: '📝', label: 'Reports' },
-  { name: 'alerts', icon: '🚨', label: 'Alerts' }
-];
+  { name: 'weather',   icon: '☀️', label: 'Weather' },
+  { name: 'airQuality',icon: '🌫️', label: 'Air Quality' },
+  { name: 'traffic',   icon: '🚦', label: 'Traffic' },
+  { name: 'feedback',  icon: '📝', label: 'Reports' },
+  { name: 'alerts',    icon: '🚨', label: 'Alerts' },
+  { name: 'zones',     icon: '🚧', label: 'Accident Zones' },
+]
 
 export default function ControlPanel({ active, onToggle }) {
   return (
@@ -23,5 +26,5 @@ export default function ControlPanel({ active, onToggle }) {
         </div>
       ))}
     </div>
-  );
+  )
 }

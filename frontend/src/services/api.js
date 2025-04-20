@@ -1,83 +1,39 @@
-import axios from 'axios';
-import Cookies from 'js-cookie';  // For CSRF tokens
+// src/services/api.js
 
-const refreshToken = async () => {
-  try {
-    const response = await axios.post(
-      'http://localhost:8000/api/auth/token/refresh/',
-      { refresh: localStorage.getItem('refresh_token') },
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-    return response.data.access;
-  } catch (err) {
-    throw new Error('Token refresh failed');
-  }
-};
+import axios from 'axios'
 
+// Create a single axios instance for the app
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api',
+  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
-});
+  withCredentials: true, // send cookies (if you ever need CSRF/session)
+})
 
-// Request interceptor
+// Attach the token on every request if present
 api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  const csrfToken = Cookies.get('csrftoken');
-
+  const token = localStorage.getItem('token')
   if (token) {
-    config.headers.Authorization = `Token ${token}`;
+    config.headers.Authorization = `Token ${token}`
   }
-  if (csrfToken) {
-    config.headers['X-CSRFToken'] = csrfToken;
-  }
-  return config;
-});
+  return config
+})
 
-// Response interceptor
+// Global response handler 
 api.interceptors.response.use(
   response => response,
-  async error => {
-    if (error.response?.status === 401) {
-      const originalRequest = error.config;
-      const token = localStorage.getItem('token');
-
-      // Attempt token refresh if possible
-      if (token && !originalRequest._retry) {
-        originalRequest._retry = true;
-        try {
-          const newToken = await refreshToken();  
-          localStorage.setItem('token', newToken);
-          return api(originalRequest);
-        } catch (refreshError) {
-          localStorage.removeItem('token');
-          window.location.href = '/login';
-        }
-      } else {
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-      }
+  error => {
+    const status = error.response?.status
+    // If unauthorized, clear token and reload to kick user to login
+    if (status === 401 || status === 403) {
+      localStorage.removeItem('token')
+      // optional: redirect or reload
+      window.location.reload()
     }
-
-    // Global error handling (e.g., show toast)
-    const errorMessage = error.response?.data?.message || 'Request failed';
-    console.error('API Error:', errorMessage);
-    return Promise.reject(error);
+    return Promise.reject(error)
   }
-);
+)
 
-// Dev-only logging
-if (process.env.NODE_ENV === 'development') {
-  api.interceptors.request.use(request => {
-    console.log('Request:', request);
-    return request;
-  });
-  api.interceptors.response.use(response => {
-    console.log('Response:', response);
-    return response;
-  });
-}
-
-export default api;
+export default api

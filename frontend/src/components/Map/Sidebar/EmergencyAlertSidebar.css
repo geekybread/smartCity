@@ -32,3 +32,20 @@
     font-size: 14px;
   }
   
+  .alert-sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .sort-controls {
+    font-size: 14px;
+  }
+  
+  .sort-controls select {
+    margin-left: 5px;
+    padding: 2px 6px;
+  }
+  
