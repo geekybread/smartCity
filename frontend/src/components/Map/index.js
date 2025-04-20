@@ -132,7 +132,7 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
           setCenter(result.center);
           setZoom(14);
           mapRef.current?.panTo(result.center);
-          mapRef.current?.setZoom(result.zoom);
+          mapRef.current?.setZoom(14);
         }
 
         onResult?.({
@@ -142,9 +142,9 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
             refocus: () => {
               if (result.center) {
                 setCenter(result.center);
-                setZoom(result.zoom);
+                setZoom(14);
                 mapRef.current?.panTo(result.center);
-                mapRef.current?.setZoom(result.zoom);
+                mapRef.current?.setZoom(14);
               }
             }
           }
@@ -176,6 +176,7 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
             showAlerts={showAlerts}
             setSelectedZoneId={setSelectedZoneId}
             accidentZones={accidentZones}
+            selectedZoneId={selectedZoneId}
             alerts={alerts}
             markers={markers}
             onLoad={onLoad}
@@ -197,7 +198,7 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
         onReportClick={handleReportClick}
         onFeedbackSubmit={handleFeedbackSubmit}
         accidentZones={accidentZones}
-        selectedZoneId={selectedZoneId}
+        setSelectedZoneId={setSelectedZoneId}
         alerts={alerts}
       />
     </div>

@@ -1,5 +1,5 @@
 // src/components/Map/MapLoader.js
-import React from 'react'
+import React, {useRef} from 'react'
 import {
   GoogleMap,
   useLoadScript,
@@ -9,6 +9,7 @@ import {
 } from '@react-google-maps/api'
 import { GOOGLE_MAPS_CONFIG } from './configs/maps'
 
+
 export default function MapLoader({
   center,
   zoom,
@@ -16,10 +17,15 @@ export default function MapLoader({
   showZones,
   showAlerts,
   accidentZones,
+  selectedZoneId,
+  setSelectedZoneId,
   alerts,
   onLoad,
   onUnmount
 }) {
+
+  const mapRef = useRef();
+
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: GOOGLE_MAPS_CONFIG.apiKey,
     libraries: [
@@ -55,26 +61,27 @@ export default function MapLoader({
       {showTraffic && <TrafficLayer />}
 
       {showZones &&
-        accidentZones.map(z => {
-          const path = (z.polygon || [])
-            .map(p => ({
-              lat: Number(p[0]),
-              lng: Number(p[1])
-            }))
-            .filter(pt => !isNaN(pt.lat) && !isNaN(pt.lng))
-          return path.length ? (
-            <Polygon
-              key={z.id}
-              paths={path}
-              options={{
-                fillColor: 'red',
-                fillOpacity: 0.3,
-                strokeColor: 'red',
-                strokeOpacity: 0.8
-              }}
-            />
-          ) : null
-        })}
+        accidentZones.map(zone => (
+          <Polygon
+            key={zone.id}
+            paths={zone.polygon.map(p => ({ lat: +p[0], lng: +p[1] }))}
+            options={{
+              fillColor: zone.id === selectedZoneId ? 'blue' : 'red',
+              fillOpacity: 0.3,
+              strokeColor: zone.id === selectedZoneId ? 'blue' : 'red',
+              strokeOpacity: 0.8,
+              strokeWeight: zone.id === selectedZoneId ? 3 : 1.5,
+              zIndex: zone.id === selectedZoneId ? 999 : 1,
+            }}
+            onClick={() => {
+              const bounds = new window.google.maps.LatLngBounds();
+              zone.polygon.forEach(([lat, lng]) => bounds.extend({ lat: +lat, lng: +lng }));
+              mapRef.current?.fitBounds(bounds);
+              setSelectedZoneId(zone.id);
+            }}
+          />
+        ))}
+
 
       {showAlerts &&
         alerts

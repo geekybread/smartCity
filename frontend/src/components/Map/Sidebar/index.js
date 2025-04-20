@@ -71,7 +71,13 @@ export default function Sidebar({
                 {accidentZones.length > 0 ? (
                   <ul className="zone-list">
                     {accidentZones.map(z => (
-                      <li key={z.id}>{z.name}</li>
+                      <li
+                        key={z.id}
+                        onClick={() => rest.setSelectedZoneId(z.id)}
+                        style={{ cursor: 'pointer', color: '#007bff' }}
+                      >
+                        {z.name}
+                      </li>
                     ))}
                   </ul>
                 ) : (
@@ -79,6 +85,7 @@ export default function Sidebar({
                 )}
               </div>
             )}
+
           </div>
         </>
       )}
