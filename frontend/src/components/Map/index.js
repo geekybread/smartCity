@@ -9,26 +9,28 @@ import useAccidentZones from './hooks/useAccidentZones';
 import useAlerts from './hooks/useAlerts';
 import './Map.css';
 
-export default React.forwardRef(function Map({ city, country, onResult }, ref) {
+export default React.forwardRef(function Map({ city, country, coordinates, isUserLocation, onResult }, ref) {
   const { user } = useAuth();
-  const { weather, airQuality, feedbacks, markers, fetchData, addFeedback } =
-    useMapData(city, country, user);
+  const { weather, airQuality, feedbacks, markers, fetchData, addFeedback } = useMapData(city, country, user);
   const { zones: accidentZones } = useAccidentZones(city);
   const { alerts } = useAlerts(city);
 
-  const [center, setCenter]             = useState({ lat: 28.6139, lng: 77.209 });
-  const [zoom, setZoom]                 = useState(city ? 13 : 6);
-  const [showTraffic, setShowTraffic]   = useState(false);
-  const [showZones, setShowZones]       = useState(false);
-  const [showAlerts, setShowAlerts]     = useState(false);
-  const [activeSidebar, setActiveSidebar]       = useState(null);
+  const [center, setCenter] = useState(coordinates || null);
+  const [zoom, setZoom] = useState(city ? 14 : 6);
+  const [showTraffic, setShowTraffic] = useState(false);
+  const [showZones, setShowZones] = useState(false);
+  const [showAlerts, setShowAlerts] = useState(false);
+  const [activeSidebar, setActiveSidebar] = useState(null);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
-  const [isLoading, setIsLoading]       = useState(false);
-  const currentLocationRef = useRef({ city: 'New Delhi', country: 'India' });
-  const mapRef = useRef();
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedZoneId, setSelectedZoneId] = useState(null);
 
-  // sync currentLocation and reset panels when city changes
+
+  const mapRef = useRef();
+  const currentLocationRef = useRef({ city, country });
+
+  // Sync location props
   useEffect(() => {
     currentLocationRef.current = { city, country };
     setActiveSidebar(null);
@@ -36,9 +38,15 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
     setShowAlerts(false);
     setShowTraffic(false);
     setShowFeedbackForm(false);
-  }, [city, country]);
 
-  // sidebar toggler
+    // Update center if coordinates change
+    if (coordinates) {
+      setCenter(coordinates);
+      setZoom(14);
+    }
+  }, [city, country, coordinates]);
+
+  // Sidebar toggle handler
   const onToggle = name => {
     const next = activeSidebar === name ? null : name;
     setActiveSidebar(next);
@@ -48,7 +56,7 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
     setShowFeedbackForm(false);
   };
 
-  // report feedback click
+  // Report click handler
   const handleReportClick = () => {
     if (!user) return alert('Please login to submit feedback');
     const c = mapRef.current.getCenter();
@@ -59,7 +67,7 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
     setActiveSidebar('feedback');
   };
 
-  // submit feedback
+  // Feedback submit
   const handleFeedbackSubmit = async feedback => {
     if (!user) return alert('Please login to submit feedback');
     try {
@@ -69,7 +77,7 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
         id: `feedback-${Date.now()}`,
         location_name: selectedLocation,
         latitude: c.lat(),
-        longitude: c.lng(),
+        longitude: c.lng()
       });
       setShowFeedbackForm(false);
       alert('Thank you for your report!');
@@ -79,7 +87,7 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
     }
   };
 
-  // marker click
+  // Marker click handler
   const onMarkerClick = id => {
     const fb = feedbacks.find(f => f.id === id);
     if (!fb) return;
@@ -88,27 +96,29 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
     setActiveSidebar('feedback');
   };
 
-  // map load & click
+  // Map init and click listener
   const onLoad = map => {
     mapRef.current = map;
+
     map.addListener('click', e => {
       if (activeSidebar !== 'feedback') return;
-      const lat = e.latLng.lat(), lng = e.latLng.lng();
-      setSelectedLocation(
-        `${currentLocationRef.current.city} (${lat.toFixed(4)}, ${lng.toFixed(4)})`
-      );
 
-      setActiveSidebar('feedback')
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+      const label = currentLocationRef.current.city
+        ? `${currentLocationRef.current.city} (${lat.toFixed(4)}, ${lng.toFixed(4)})`
+        : `(${lat.toFixed(4)}, ${lng.toFixed(4)})`;
 
-      if (activeSidebar === 'feedback') {
-        setShowFeedbackForm(true); // ✅ only open if feedback sidebar is active
-      }
-      ;
+      setSelectedLocation(label);
+      setShowFeedbackForm(true);
     });
   };
-  const onUnmount = () => { mapRef.current = null; };
 
-  // fetch data when city/country changes
+  const onUnmount = () => {
+    mapRef.current = null;
+  };
+
+  // Fetch data for city/country
   useEffect(() => {
     setIsLoading(true);
     fetchData()
@@ -117,24 +127,28 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
           onResult?.({ success: false, message: result.message });
           return;
         }
+
         if (result.center && result.zoom != null) {
           setCenter(result.center);
-          setZoom(result.zoom);
+          setZoom(14);
           mapRef.current?.panTo(result.center);
           mapRef.current?.setZoom(result.zoom);
-          onResult?.({
-            success: true,
-            message: city,
-            mapRef: {
-              refocus: () => {
+        }
+
+        onResult?.({
+          success: true,
+          message: city,
+          mapRef: {
+            refocus: () => {
+              if (result.center) {
                 setCenter(result.center);
                 setZoom(result.zoom);
                 mapRef.current?.panTo(result.center);
                 mapRef.current?.setZoom(result.zoom);
               }
             }
-          });
-        }
+          }
+        });
       })
       .catch(err => {
         onResult?.({ success: false, message: 'Unexpected error: ' + err.message });
@@ -148,21 +162,27 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
 
       <div className={`map-container ${activeSidebar ? 'sidebar-open' : ''}`}>
         {isLoading && (
-          <div className="map-loading-overlay"><div className="spinner" /></div>
+          <div className="map-loading-overlay">
+            <div className="spinner" />
+          </div>
         )}
-        <MapLoader
-          center={center}
-          zoom={zoom}
-          showTraffic={showTraffic}
-          showZones={showZones}
-          showAlerts={showAlerts}
-          accidentZones={accidentZones}
-          alerts={alerts}
-          markers={markers}
-          onLoad={onLoad}
-          onUnmount={onUnmount}
-          onMarkerClick={onMarkerClick}
-        />
+
+        {center && (
+          <MapLoader
+            center={center}
+            zoom={zoom || 14} 
+            showTraffic={showTraffic}
+            showZones={showZones}
+            showAlerts={showAlerts}
+            setSelectedZoneId={setSelectedZoneId}
+            accidentZones={accidentZones}
+            alerts={alerts}
+            markers={markers}
+            onLoad={onLoad}
+            onUnmount={onUnmount}
+            onMarkerClick={onMarkerClick}
+          />
+        )}
       </div>
 
       <Sidebar
@@ -177,6 +197,7 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
         onReportClick={handleReportClick}
         onFeedbackSubmit={handleFeedbackSubmit}
         accidentZones={accidentZones}
+        selectedZoneId={selectedZoneId}
         alerts={alerts}
       />
     </div>

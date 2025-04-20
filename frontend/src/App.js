@@ -1,6 +1,6 @@
 // src/App.js
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './context/AuthContext';
 import GoogleAuth from './components/Auth/GoogleLogin';
 import Map from './components/Map';
@@ -21,15 +21,84 @@ axios.interceptors.request.use(config => {
 
 function App() {
   const { loading } = useAuth();
-  const [location, setLocation] = useState({
-    city: 'New Delhi',
-    country: 'India'
-  });
-  const [searchQuery, setSearchQuery] = useState({
-    city: '',
-    country: ''
-  });
+  const [location, setLocation] = useState(null);
+  const [pendingLocation, setPendingLocation] = useState(null);
+  const [searchQuery, setSearchQuery] = useState({ city: '', country: '' });
   const mapRef = useRef();
+
+  const fetchCityFromCoordinates = async (lat, lng) => {
+    const apiKey = process.env.REACT_APP_GOOGLE_GEOCODE_API_KEY; // make sure it's set in .env
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
+  
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+  
+      if (data.status === 'OK') {
+        const result = data.results.find(r =>
+          r.types.includes('locality') || r.types.includes('administrative_area_level_2')
+        );
+  
+        if (result) {
+          const cityComp = result.address_components.find(c =>
+            c.types.includes('locality') || c.types.includes('administrative_area_level_2')
+          );
+          return cityComp?.long_name;
+        }
+      } else {
+        console.warn('🧭 Geocode error:', data.status, data.error_message);
+      }
+    } catch (error) {
+      console.error('❌ Failed to fetch city name:', error);
+    }
+  
+    return null;
+  };
+  
+  
+
+  // 📍 Determine user's location only once
+  useEffect(() => {
+    if (location) return;
+  
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const city = await fetchCityFromCoordinates(latitude, longitude);
+  
+        setLocation({
+          city: city || 'Unknown',
+          country: 'India',
+          coordinates: { lat: latitude, lng: longitude },
+          isUserLocation: true
+        });
+      },
+      (err) => {
+        console.warn("⚠️ Geolocation failed. Using fallback location:", err.message);
+        setLocation({
+          city: 'New Delhi',
+          country: 'India',
+          coordinates: { lat: 28.6139, lng: 77.209 },
+          isUserLocation: false
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+  }, [location]);
+  
+
+
+  // Sync pending location from search
+  useEffect(() => {
+    if (pendingLocation) {
+      setLocation(pendingLocation);
+      setPendingLocation(null);
+    }
+  }, [pendingLocation]);
 
   const handleMapResult = useCallback(result => {
     if (result.success) toast.success(result.message);
@@ -47,10 +116,12 @@ function App() {
       toast.error('Please enter a city or country');
       return;
     }
+
     const newLoc = { city, country };
+
     if (
-      newLoc.city.toLowerCase() === location.city.toLowerCase() &&
-      newLoc.country.toLowerCase() === location.country.toLowerCase()
+      newLoc.city.toLowerCase() === location?.city?.toLowerCase() &&
+      newLoc.country.toLowerCase() === location?.country?.toLowerCase()
     ) {
       if (mapRef.current?.refocus) {
         mapRef.current.refocus();
@@ -59,7 +130,7 @@ function App() {
         toast.info('Already showing this location');
       }
     } else {
-      setLocation(newLoc);
+      setPendingLocation(newLoc);
       toast.info('Searching for location...');
     }
   };
@@ -69,7 +140,7 @@ function App() {
     setSearchQuery(prev => ({ ...prev, [name]: value }));
   };
 
-  if (loading) {
+  if (loading || !location) {
     return <div className="loading-screen">Loading...</div>;
   }
 
@@ -114,6 +185,8 @@ function App() {
       <Map
         city={location.city}
         country={location.country}
+        coordinates={location.coordinates}
+        isUserLocation={location.isUserLocation}
         onResult={handleMapResult}
         ref={mapRef}
       />
