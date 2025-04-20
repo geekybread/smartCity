@@ -10,16 +10,19 @@ const GoogleAuth = () => {
   const { user, login, logout } = useAuth()
 
   const handleSuccess = async credentialResponse => {
+    const id_token = credentialResponse.credential;
+  
     try {
       const { data } = await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/api/auth/google/`,
-        { id_token: credentialResponse.credential, provider: 'google' },
+        { id_token },
         { withCredentials: true }
       )
       login(data.key, data.user)
       toast.success('✅ Logged in successfully!')
-    } catch {
-      toast.error('❌ Login failed')
+    } catch (err) {
+      console.error("❌ Backend error:", err.response?.data || err.message)
+      toast.error(`❌ Login failed: ${err.response?.data?.error || err.message}`)
     }
   }
 

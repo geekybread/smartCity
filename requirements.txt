@@ -4,3 +4,6 @@ django-cors-headers
 django-allauth
 pymysql
 django-csp<3.7.0
+google-auth>=2.20.0
+google-auth-oauthlib>=0.17.0
+google-auth-httplib2>=0.1.0
