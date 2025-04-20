@@ -5,21 +5,9 @@ import api from '../../../services/api';
 export default function useMapData(city, country, user) {
   const [weather, setWeather] = useState(null);
   const [airQuality, setAirQuality] = useState(null);
-  const [markers, setMarkers] = useState([]);
+  const [feedbacks, setFeedbacks] = useState([]);  // All feedback reports
   const prevSearchRef = useRef('');
 
-  const updateMarkers = useCallback(data => {
-    const newMarkers = data.map(f => ({
-      id: f.id,
-      position: {
-        lat: typeof f.latitude === 'number' ? f.latitude : parseFloat(f.latitude),
-        lng: typeof f.longitude === 'number' ? f.longitude : parseFloat(f.longitude)
-      },
-      type: f.issue_type || f.issueType,
-      severity: f.severity
-    }));
-    setMarkers(newMarkers);
-  }, []);
 
   const fetchData = useCallback(async () => {
     if (!city && !country) return { center: null, zoom: null };
@@ -35,20 +23,22 @@ export default function useMapData(city, country, user) {
       setWeather(weatherData);
       setAirQuality(airQualityData);
 
-      // Fetch feedbacks just to update markers (not sidebar list)
       try {
         const resp = await api.get(`/api/feedback/?city=${encodeURIComponent(city)}`, {
           headers: user ? { Authorization: `Token ${localStorage.getItem('token')}` } : {}
         });
-        updateMarkers(resp.data);
+
+        setFeedbacks(resp.data);        // Store all feedbacks
+
       } catch (err) {
-        console.error('Marker update feedback fetch failed:', err);
-        setMarkers([]);
+        console.error('Feedback fetch failed:', err);
+        setFeedbacks([]);
       }
 
       return { center: { lat, lng: lon }, zoom: city ? 13 : 6 };
+
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Map data error:', error);
       let message;
       switch (error.message) {
         case 'CITY_NOT_FOUND':
@@ -68,7 +58,7 @@ export default function useMapData(city, country, user) {
       }
       return { error: true, message };
     }
-  }, [city, country, updateMarkers, user]);
+  }, [city, country, user]);
 
   const addFeedback = async (newFeedback) => {
     try {
@@ -76,21 +66,14 @@ export default function useMapData(city, country, user) {
         headers: { Authorization: `Token ${localStorage.getItem('token')}` }
       });
 
-      // Add new marker only for display
-      const newMarker = {
-        id: response.data.id,
-        position: {
-          lat: parseFloat(response.data.latitude),
-          lng: parseFloat(response.data.longitude)
-        },
-        type: response.data.issue_type,
-        severity: response.data.severity
-      };
-      setMarkers(prev => [newMarker, ...prev]);
+      const newFb = response.data;
+
+      setFeedbacks(prev => [newFb, ...prev]);  // Add to full list
+
     } catch (err) {
       console.error('Error submitting feedback:', err);
     }
   };
 
-  return { weather, airQuality, markers, fetchData, addFeedback };
+  return { weather, airQuality, feedbacks, fetchData, addFeedback };
 }

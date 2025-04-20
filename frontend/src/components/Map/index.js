@@ -8,7 +8,7 @@ import './Map.css';
 
 export default React.forwardRef(function Map({ city, country, onResult }, ref) {
   const { user } = useAuth();
-  const { weather, airQuality, feedbacks, markers, fetchData, addFeedback } = useMapData(city, country, user);
+  const { weather, airQuality, feedbacks, fetchData, addFeedback } = useMapData(city, country, user);
   const [center, setCenter] = useState({ lat: 28.6139, lng: 77.209 });
   const [zoom, setZoom] = useState(city ? 13 : 6);
   const [showTraffic, setShowTraffic] = useState(false);
@@ -16,20 +16,22 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentLocation, setCurrentLocation] = useState({ city: 'New Delhi', country: 'India' });
+  const currentLocationRef = useRef({ city: 'New Delhi', country: 'India' });
 
   const mapRef = useRef();
 
   // Sync searched location with internal state
   useEffect(() => {
-    setCurrentLocation({ city, country });
+    console.log("📍 Updating currentLocation to:", city);
+    currentLocationRef.current = { city, country };
   }, [city, country]);
+  
 
   // Show feedback form on map click
   const handleReportClick = () => {
     if (!user) return alert('Please login to submit feedback');
     const c = mapRef.current.getCenter();
-    setSelectedLocation(`${city} (${c.lat().toFixed(4)}, ${c.lng().toFixed(4)})`);
+    setSelectedLocation(`${currentLocationRef.current.city} (${c.lat().toFixed(4)}, ${c.lng().toFixed(4)})`);
     setShowFeedbackForm(true);
   };
 
@@ -80,22 +82,50 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
 
   // Marker click handler
   const onMarkerClick = id => {
+    if (!Array.isArray(feedbacks)) {
+      console.warn("⚠️ Feedbacks not loaded yet");
+      return;
+    }
+  
     const fb = feedbacks.find(f => f.id === id);
     if (fb) {
-      setSelectedLocation(fb.location || fb.location_name);
-      setShowFeedbackForm(true);
-      setActiveSidebar('feedback');
+    setSelectedLocation(fb.location || fb.location_name);
+    setShowFeedbackForm(true);
+    setActiveSidebar('feedback');
+
+    setTimeout(() => {
+        const el = document.getElementById(`feedback-${fb.id}`);
+        if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('highlight');
+        setTimeout(() => el.classList.remove('highlight'), 2000);  // remove after 2s
+        }
+    }, 0);
     }
   };
+  
+  
 
   // Map load and click handling
   const onLoad = map => {
     mapRef.current = map;
-    map.addListener('click', e => {
-      const loc = { lat: e.latLng.lat(), lng: e.latLng.lng() };
-      setSelectedLocation(`${city} (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})`);
-      setShowFeedbackForm(true);
-    });
+    map.addListener('click', (e) => {
+        const lat = e.latLng.lat();
+        const lng = e.latLng.lng();
+        const formatted = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      
+        const label = currentLocationRef.current.city
+          ? `${currentLocationRef.current.city} (${formatted})`
+          : `(${formatted})`;
+      
+        console.log("🖱️ Map click — using city:", currentLocationRef.current.city);
+      
+        setSelectedLocation(label);
+      });
+      
+      
+      
+      
   };
   const onUnmount = () => { mapRef.current = null; };
 
@@ -135,6 +165,7 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
       .finally(() => setIsLoading(false));
   }, [city, country, fetchData, onResult]);
 
+
   return (
     <div className="map-page-container">
       <ControlPanel active={activeSidebar} onToggle={onToggle}/>
@@ -149,7 +180,7 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
           center={center}
           zoom={zoom}
           showTraffic={showTraffic}
-          markers={markers}
+          markers={[]}
           getMarkerIcon={getMarkerIcon}
           onLoad={onLoad}
           onUnmount={onUnmount}
@@ -163,8 +194,8 @@ export default React.forwardRef(function Map({ city, country, onResult }, ref) {
         onToggle={onToggle}
         weather={weather}
         airQuality={airQuality}
-        city={currentLocation.city}
-        currentLocation={currentLocation}
+        city={currentLocationRef.current.city}
+        currentLocation={currentLocationRef.current}
         showFeedbackForm={showFeedbackForm}
         selectedLocation={selectedLocation}
         onReportClick={handleReportClick}

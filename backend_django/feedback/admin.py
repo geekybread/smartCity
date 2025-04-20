@@ -4,31 +4,38 @@ from .models import FeedbackReport, FeedbackUpvote
 @admin.register(FeedbackReport)
 class FeedbackReportAdmin(admin.ModelAdmin):
     list_display = (
-        'id',
         'issue_type',
         'severity',
         'status',
         'location_name',
         'created_at',
         'user',
-        'upvotes',
+        'admin_response',
     )
-    list_filter = ('status', 'severity', 'issue_type', 'created_at')
-    search_fields = ('description', 'location_name', 'user__email')
+    list_filter = ('status', 'severity', 'issue_type','location_name', 'created_at')
+    list_editable = ['status', 'admin_response']
+
+    search_fields = ('description', 'location_name', 'user__email','city')
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'upvotes')
 
+    # ✅ Group form fields for clarity:
     fieldsets = (
-        (None, {
-            'fields': ('issue_type', 'severity', 'description', 'status', 'admin_response')
+        ('Issue Details', {
+            'fields': ('issue_type', 'description', 'severity')
         }),
-        ('Location', {
-            'fields': ('location_name', 'latitude', 'longitude'),
+        ('Location Information', {
+            'fields': ('location_name', 'latitude', 'longitude')
+        }),
+        ('Status & Response', {
+            'fields': ('status', 'admin_response')
         }),
         ('Meta', {
-            'fields': ('user', 'created_at', 'upvotes'),
+            'fields': ('user', 'created_at')
         }),
     )
+
+    readonly_fields = ['created_at']
 
     def has_add_permission(self, request):
         return True  # optional: restrict add in admin

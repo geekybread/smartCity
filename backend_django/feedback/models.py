@@ -36,6 +36,7 @@ class FeedbackReport(models.Model):
     description = models.TextField()
     severity = models.CharField(max_length=10, choices=SEVERITY_LEVELS, default='medium')
     location_name = models.CharField(max_length=200)
+    city = models.CharField(max_length=100, blank=True)
     latitude = models.DecimalField(max_digits=10, decimal_places=7)
     longitude = models.DecimalField(max_digits=10, decimal_places=7)
     created_at = models.DateTimeField(auto_now_add=True)

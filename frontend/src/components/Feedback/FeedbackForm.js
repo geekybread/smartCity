@@ -36,7 +36,7 @@ const FeedbackForm = ({ onSubmit, onCancel, location }) => {
       location_name: location?.name || location?.address || "Unknown location",
       latitude: location?.lat,
       longitude: location?.lng,
-      //is_anonymous: formData.isAnonymous,
+      city: location?.city || "Unknown city",
       upvotes: 0,
     };
     onSubmit(feedbackData);

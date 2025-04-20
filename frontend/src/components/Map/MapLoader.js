@@ -1,17 +1,14 @@
 import React from 'react';
-import { GoogleMap, useLoadScript, TrafficLayer, Marker } from '@react-google-maps/api';
+import { GoogleMap, useLoadScript, TrafficLayer } from '@react-google-maps/api';
 import { GOOGLE_MAPS_CONFIG } from './configs/maps';
 
 export default function MapLoader({
   center,
   zoom,
-  markers,
   showTraffic,
-  getMarkerIcon,
   onLoad,
   onUnmount,
   onMapClick,
-  onMarkerClick
 }) {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: GOOGLE_MAPS_CONFIG.apiKey,
@@ -40,17 +37,6 @@ export default function MapLoader({
       }}
     >
       {showTraffic && <TrafficLayer />}
-      {markers.map(marker => (
-        <Marker
-          key={marker.id}
-          position={marker.position}
-          icon={{
-            url: getMarkerIcon(marker.type, marker.severity),
-            scaledSize: new window.google.maps.Size(32, 32)
-          }}
-          onClick={() => onMarkerClick(marker.id)}
-        />
-      ))}
     </GoogleMap>
   );
 }

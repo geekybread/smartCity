@@ -76,7 +76,7 @@ const FeedbackItem = ({ feedback }) => {
   };
 
   return (
-    <div className="feedback-item">
+    <div className="feedback-item" id={`feedback-${feedback.id}`}>
       <div className="feedback-header">
         <span className="feedback-icon">{getIcon(feedback?.issueType)}</span>
         <span className="feedback-type">
