@@ -1,0 +1,32 @@
+.zones-sidebar {
+    padding: 12px;
+    background-color: #f7f9fc;
+    border-radius: 8px;
+  }
+  
+  .zones-sidebar h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  .zones-sidebar li {
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    background: #eaf1fb;
+    cursor: pointer;
+    list-style-type: none;
+    transition: background 0.2s ease;
+  }
+  
+  .zones-sidebar li:hover {
+    background: #d6e6fb;
+  }
+  
+  .zone-item-active {
+    background-color: #007bff;
+    color: #fff !important;
+    font-weight: bold;
+  }
+  

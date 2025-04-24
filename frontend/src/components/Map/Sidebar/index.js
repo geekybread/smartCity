@@ -8,6 +8,7 @@ import TrafficSidebar        from './TrafficSidebar'
 import FeedbackSidebar       from './FeedbackSidebar'
 import EmergencyAlertSidebar from './EmergencyAlertSidebar'
 import '../css/Sidebar.css'
+import '../css/AccidentZoneSidebar.css'
 
 const titles = {
   weather:    'Weather Data',

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import api from '../../../services/api';
-import './EmergencyAlertSidebar.css';
+import '../css/EmergencyAlertSidebar.css';
 
 const EmergencyAlertSidebar = ({ city, isActive }) => {
   const [alerts, setAlerts] = useState([]);
