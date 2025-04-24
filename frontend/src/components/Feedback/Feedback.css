@@ -97,11 +97,36 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  position: relative;
+  transition: transform 0.2s ease;
 }
 
+.upvote-btn:hover {
+  transform: scale(1.1);
+}
+
+/* ✅ Normal Upvoted Style */
 .upvote-btn.upvoted {
   color: gold;
   font-weight: bold;
+}
+
+/* ✅ Hover "Blocked" Tag */
+.upvote-btn.blocked:hover::after {
+  content: '🚫 Already upvoted';
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #222;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  z-index: 10;
+  opacity: 0.95;
 }
 
 /* === Comments === */
@@ -272,7 +297,7 @@
 .feedback-controls {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   margin-bottom: 16px;
 }
 
@@ -317,4 +342,21 @@
   border-radius: 6px;
   padding: 6px 10px;
   font-size: 0.9rem;
+}
+
+.toggle-comments-btn {
+  background-color: #1f1f1f;
+  color: #bbb;
+  border: 1px solid #333;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  margin-top: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-comments-btn:hover {
+  background-color: #292929;
+  color: #fff;
 }

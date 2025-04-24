@@ -48,16 +48,25 @@ export default function FeedbackSidebar({
   }
 
   return (
-    <>
-      <button className="report-issue-btn" onClick={onReportClick}>
-        Report New Issue
-      </button>
-
+    <div className="feedback-sidebar">
+      <div className="feedback-controls">
+        <button className="report-issue-btn" onClick={onReportClick}>
+          ➕ Report New Issue
+        </button>
+  
+        {/* Optional filters if you add later */}
+        {/* <div className="feedback-filters">
+          <label>Filter by Issue:</label>
+          <select>...</select>
+        </div> */}
+      </div>
+  
       {loading ? (
         <p>Loading feedbacks...</p>
       ) : (
         <FeedbackList feedbacks={feedbacks} city={city} />
       )}
-    </>
+    </div>
   );
+  
 }

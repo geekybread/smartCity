@@ -8,11 +8,16 @@ const FeedbackItem = ({ feedback }) => {
   const { user } = useAuth();
   const [upvoted, setUpvoted] = useState(false);
   const [upvoteCount, setUpvoteCount] = useState(feedback?.upvotes || 0);
+  const [showComments, setShowComments] = useState(false);
+
 
   useEffect(() => {
-    setUpvoted(feedback.has_upvoted || false);
-  }, [feedback]);
-
+    const userKey = user ? `upvotedFeedbacks_${user.email}` : null;
+    const votedList = userKey ? JSON.parse(localStorage.getItem(userKey) || '[]') : [];
+  
+    setUpvoted(feedback.has_upvoted || votedList.includes(feedback.id));
+  }, [feedback, user]);
+  
   const handleUpvote = async () => {
     if (!user) {
       alert('Please login to upvote');
@@ -86,13 +91,13 @@ const FeedbackItem = ({ feedback }) => {
 
       <div className="feedback-meta">
         <button
-          className={`upvote-btn ${upvoted ? 'upvoted' : ''}`}
+          className={`upvote-btn ${upvoted ? 'upvoted blocked' : ''}`}
           onClick={handleUpvote}
-          disabled={upvoted || !user}
-          title={upvoted ? 'You have already upvoted' : 'Upvote this report'}
+          title={upvoted ? 'You have already upvoted this report' : 'Upvote this report'}
         >
           👍 {upvoteCount}
         </button>
+
 
         <div className="feedback-location-date">
           <span className="feedback-location">
@@ -109,7 +114,17 @@ const FeedbackItem = ({ feedback }) => {
       </div>
 
       {/* ✅ Comment Section */}
-      <CommentSection feedbackId={feedback.id} />
+      <button
+        className="toggle-comments-btn"
+        onClick={() => setShowComments(prev => !prev)}
+      >
+        {showComments ? '🔽 Hide Comments' : '💬 Show Comments'}
+      </button>
+
+      {showComments && (
+        <CommentSection feedbackId={feedback.id} />
+      )}
+
     </div>
   );
 };
