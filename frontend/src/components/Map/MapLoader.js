@@ -1,11 +1,11 @@
 // src/components/Map/MapLoader.js
-import React, {useRef} from 'react'
+import React from 'react'
 import {
   GoogleMap,
   useLoadScript,
   TrafficLayer,
   Polygon,
-  Marker
+  Marker,
 } from '@react-google-maps/api'
 import { GOOGLE_MAPS_CONFIG } from './configs/maps'
 
@@ -21,10 +21,11 @@ export default function MapLoader({
   setSelectedZoneId,
   alerts,
   onLoad,
-  onUnmount
+  onUnmount,
+  mapRef,
 }) {
 
-  const mapRef = useRef();
+  // const mapRef = useRef();
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: GOOGLE_MAPS_CONFIG.apiKey,
@@ -61,7 +62,8 @@ export default function MapLoader({
       {showTraffic && <TrafficLayer />}
 
       {showZones &&
-        accidentZones.map(zone => (
+        accidentZones.map((zone,i) => {
+          return(
           <Polygon
             key={zone.id}
             paths={zone.polygon.map(p => ({ lat: +p[0], lng: +p[1] }))}
@@ -74,14 +76,52 @@ export default function MapLoader({
               zIndex: zone.id === selectedZoneId ? 999 : 1,
             }}
             onClick={() => {
+              console.log("Polygon clicked:", zone.id);
               const bounds = new window.google.maps.LatLngBounds();
               zone.polygon.forEach(([lat, lng]) => bounds.extend({ lat: +lat, lng: +lng }));
-              mapRef.current?.fitBounds(bounds);
+              if (mapRef?.current) {
+                mapRef.current.fitBounds(bounds);
+              
+                // ✅ Decrease zoom slightly after fitting bounds
+                const listener = window.google.maps.event.addListenerOnce(mapRef.current, 'bounds_changed', () => {
+                  const currentZoom = mapRef.current.getZoom();
+                  mapRef.current.setZoom(Math.max(currentZoom - 1, 5)); // Reduce zoom, with lower bound to avoid zooming out too much
+                });
+              }
+               else {
+                console.warn("❌ mapRef.current is undefined");
+              }
               setSelectedZoneId(zone.id);
             }}
           />
-        ))}
+        )})}
 
+          {/* {showZones && accidentZones.map((zone, i) => {
+            const simplePaths = [
+              { lat: 28.6139, lng: 77.209 }, // center of New Delhi
+              { lat: 28.6239, lng: 77.209 },
+              { lat: 28.6239, lng: 77.219 },
+              { lat: 28.6139, lng: 77.219 },
+            ]; // a small square to test
+          
+            return (
+              <Polygon
+                key={`test-${i}`}
+                paths={simplePaths}
+                options={{
+                  fillColor: 'blue',
+                  fillOpacity: 0.5,
+                  strokeColor: 'black',
+                  strokeWeight: 2,
+                  zIndex: 9999,
+                }}
+                onClick={() => {
+                  console.log("✅ Test polygon clicked"); // 🔥 This must fire
+                }}
+              />
+            );
+          })}
+           */}
 
       {showAlerts &&
         alerts

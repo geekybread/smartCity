@@ -189,6 +189,7 @@ function App() {
         isUserLocation={location.isUserLocation}
         onResult={handleMapResult}
         ref={mapRef}
+        mapRef={mapRef}
       />
     </div>
   );

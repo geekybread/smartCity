@@ -540,3 +540,10 @@
     100% { transform: rotate(360deg); }
   }
   
+  .zone-item-active {
+    background-color: #e6f0ff;
+    font-weight: bold;
+    border-left: 4px solid #007bff;
+    padding-left: 6px;
+  }
+  

@@ -8,7 +8,8 @@ import useAccidentZones from './hooks/useAccidentZones';
 import useAlerts from './hooks/useAlerts';
 import './Map.css';
 
-export default React.forwardRef(function Map({ city, country, coordinates, isUserLocation, onResult }, ref) {
+export default React.forwardRef(function Map({ city, country, coordinates, isUserLocation, onResult, mapRef, externalMapRef}, ref) {
+  const internalMapRef = useRef();
   const { user } = useAuth();
   const { weather, airQuality, feedbacks, markers, fetchData, addFeedback } = useMapData(city, country, user);
   const { zones: accidentZones } = useAccidentZones(city);
@@ -24,8 +25,7 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedZoneId, setSelectedZoneId] = useState(null);
-
-  const mapRef = useRef();
+  // const mapRef = useRef();
   const currentLocationRef = useRef({ city, country });
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
 
   const handleReportClick = () => {
     if (!user) return alert('Please login to submit feedback');
-    const c = mapRef.current.getCenter();
+    const c = internalMapRef.current.getCenter();
     setSelectedLocation({
       name: `${currentLocationRef.current.city} (${c.lat().toFixed(4)}, ${c.lng().toFixed(4)})`,
       lat: c.lat(),
@@ -96,7 +96,9 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
   };
 
   const onLoad = map => {
-    mapRef.current = map;
+    internalMapRef.current = map;
+    if (externalMapRef) externalMapRef.current = map;
+  
     map.addListener('click', e => {
       if (!showFeedbackForm) return;
       const lat = e.latLng.lat();
@@ -112,9 +114,10 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
       });
     });
   };
+  
 
   const onUnmount = () => {
-    mapRef.current = null;
+    internalMapRef.current = null;
   };
 
   useEffect(() => {
@@ -128,8 +131,8 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
         if (result.center && result.zoom != null) {
           setCenter(result.center);
           setZoom(14);
-          mapRef.current?.panTo(result.center);
-          mapRef.current?.setZoom(14);
+          internalMapRef.current?.panTo(result.center);
+          internalMapRef.current?.setZoom(14);
         }
         onResult?.({
           success: true,
@@ -139,8 +142,8 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
               if (result.center) {
                 setCenter(result.center);
                 setZoom(14);
-                mapRef.current?.panTo(result.center);
-                mapRef.current?.setZoom(14);
+                internalMapRef.current?.panTo(result.center);
+                internalMapRef.current?.setZoom(14);
               }
             }
           }
@@ -172,6 +175,7 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
             onLoad={onLoad}
             onUnmount={onUnmount}
             onMarkerClick={onMarkerClick}
+            mapRef={internalMapRef}
           />
         )}
       </div>
@@ -189,6 +193,8 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
         accidentZones={accidentZones}
         setSelectedZoneId={setSelectedZoneId}
         alerts={alerts}
+        mapRef={internalMapRef}
+        selectedZoneId={selectedZoneId}
       />
     </div>
   );

@@ -23,6 +23,7 @@ export default function Sidebar({
   onToggle,
   accidentZones = [],
   alerts = [],
+  selectedZoneId,
   ...rest
 }) {
   const { user } = useAuth()
@@ -68,21 +69,40 @@ export default function Sidebar({
             {active === 'zones' && (
               <div className="zones-sidebar">
                 <h3>Accident Zones in {rest.city}</h3>
-                {accidentZones.length > 0 ? (
-                  <ul className="zone-list">
-                    {accidentZones.map(z => (
-                      <li
-                        key={z.id}
-                        onClick={() => rest.setSelectedZoneId(z.id)}
-                        style={{ cursor: 'pointer', color: '#007bff' }}
-                      >
-                        {z.name}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No accident zones defined for {rest.city}.</p>
-                )}
+                  {selectedZoneId && (
+                    <p style={{ fontWeight: 'bold', color: '#007bff' }}>
+                      Currently Viewing: {
+                        accidentZones.find(z => z.id === selectedZoneId)?.name || 'Unknown Zone'
+                      }
+                    </p>
+                  )}
+
+                {accidentZones.map(z => (
+                  <li
+                    key={z.id}
+                    className={z.id === selectedZoneId ? 'zone-item-active' : ''}
+                    onClick={() => {
+                      rest.setSelectedZoneId(z.id);
+                      
+                      // ✅ Center map to the zone
+                      if (rest.mapRef?.current && z.polygon?.length) {
+                        const bounds = new window.google.maps.LatLngBounds();
+                        z.polygon.forEach(([lat, lng]) => {
+                          bounds.extend({ lat: +lat, lng: +lng });
+                        });
+                        rest.mapRef.current.fitBounds(bounds);
+                        const listener = window.google.maps.event.addListenerOnce(rest.mapRef.current, 'bounds_changed', () => {
+                          const currentZoom = rest.mapRef.current.getZoom();
+                          rest.mapRef.current.setZoom(Math.max(currentZoom - 1, 5));
+                        });
+                      }
+                    }}
+                    style={{ cursor: 'pointer', color: '#007bff' }}
+                  >
+                    {z.name}
+                  </li>
+                ))}
+
               </div>
             )}
 
