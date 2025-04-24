@@ -9,14 +9,8 @@ const FeedbackItem = ({ feedback }) => {
   const [upvoteCount, setUpvoteCount] = useState(feedback?.upvotes || 0);
 
   useEffect(() => {
-    if (!user || !user.email || !feedback?.id) return;
-  
-    const userKey = `upvotedFeedbacks_${user.email}`;
-    const voted = JSON.parse(localStorage.getItem(userKey) || '[]');
-    if (voted.map(Number).includes(feedback.id)) {
-      setUpvoted(true);
-    }
-  }, [user, feedback?.id]);
+    setUpvoted(feedback.has_upvoted || false);
+  }, [feedback]);  
   
   
   

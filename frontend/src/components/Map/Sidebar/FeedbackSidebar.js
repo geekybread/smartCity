@@ -38,9 +38,10 @@ export default function FeedbackSidebar({
   if (showFeedbackForm) {
     return (
       <FeedbackForm
+        key={selectedLocation.name}
         onSubmit={onFeedbackSubmit}
         onCancel={() => onToggle('feedback')}
-        location={selectedLocation || `${city} (click to select)`}
+        location={selectedLocation}
       />
     );
   }

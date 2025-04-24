@@ -34,11 +34,17 @@ class FeedbackListCreate(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user if self.request.user.is_authenticated else None)
 
+    def get_serializer_context(self):
+        return {'request': self.request}
+
 
 class FeedbackDetail(generics.RetrieveUpdateAPIView):
     queryset = FeedbackReport.objects.all()
     serializer_class = FeedbackSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_serializer_context(self):
+        return {'request': self.request}
 
 
 class UpvoteFeedback(APIView):

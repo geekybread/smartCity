@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import DOMPurify from 'dompurify';
 import './Feedback.css';
@@ -11,6 +11,16 @@ const FeedbackForm = ({ onSubmit, onCancel, location }) => {
     severity: 'medium',
     //isAnonymous: false,
   });
+
+  useEffect(() => {
+    if (location) {
+      setFormData(prev => ({
+        ...prev,
+        location_name: location.name
+      }));
+    }
+  }, [location]);
+  
   const [error, setError] = useState(null);
   const { user } = useAuth();
 
@@ -92,7 +102,7 @@ const FeedbackForm = ({ onSubmit, onCancel, location }) => {
 
         <div className="form-group">
           <p className="location-display">
-            <strong>Location:</strong> {location}
+            <strong>Location:</strong> {location?.name || 'No location selected'}
           </p>
         </div>
 

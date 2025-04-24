@@ -1,4 +1,3 @@
-// src/components/Map/index.js
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import MapLoader from './MapLoader';
@@ -26,11 +25,9 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
   const [isLoading, setIsLoading] = useState(false);
   const [selectedZoneId, setSelectedZoneId] = useState(null);
 
-
   const mapRef = useRef();
   const currentLocationRef = useRef({ city, country });
 
-  // Sync location props
   useEffect(() => {
     currentLocationRef.current = { city, country };
     setActiveSidebar(null);
@@ -38,15 +35,12 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
     setShowAlerts(false);
     setShowTraffic(false);
     setShowFeedbackForm(false);
-
-    // Update center if coordinates change
     if (coordinates) {
       setCenter(coordinates);
       setZoom(14);
     }
   }, [city, country, coordinates]);
 
-  // Sidebar toggle handler
   const onToggle = name => {
     const next = activeSidebar === name ? null : name;
     setActiveSidebar(next);
@@ -56,28 +50,29 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
     setShowFeedbackForm(false);
   };
 
-  // Report click handler
   const handleReportClick = () => {
     if (!user) return alert('Please login to submit feedback');
     const c = mapRef.current.getCenter();
-    setSelectedLocation(
-      `${currentLocationRef.current.city} (${c.lat().toFixed(4)}, ${c.lng().toFixed(4)})`
-    );
+    setSelectedLocation({
+      name: `${currentLocationRef.current.city} (${c.lat().toFixed(4)}, ${c.lng().toFixed(4)})`,
+      lat: c.lat(),
+      lng: c.lng(),
+      city: currentLocationRef.current.city
+    });
     setShowFeedbackForm(true);
     setActiveSidebar('feedback');
   };
 
-  // Feedback submit
   const handleFeedbackSubmit = async feedback => {
     if (!user) return alert('Please login to submit feedback');
     try {
-      const c = mapRef.current.getCenter();
       await addFeedback({
         ...feedback,
         id: `feedback-${Date.now()}`,
-        location_name: selectedLocation,
-        latitude: c.lat(),
-        longitude: c.lng()
+        location_name: selectedLocation.name,
+        latitude: selectedLocation.lat,
+        longitude: selectedLocation.lng,
+        city: selectedLocation.city
       });
       setShowFeedbackForm(false);
       alert('Thank you for your report!');
@@ -87,30 +82,34 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
     }
   };
 
-  // Marker click handler
   const onMarkerClick = id => {
     const fb = feedbacks.find(f => f.id === id);
     if (!fb) return;
-    setSelectedLocation(fb.location || fb.location_name);
+    setSelectedLocation({
+      name: fb.location || fb.location_name,
+      lat: fb.latitude,
+      lng: fb.longitude,
+      city: fb.city || currentLocationRef.current.city
+    });
     setShowFeedbackForm(true);
     setActiveSidebar('feedback');
   };
 
-  // Map init and click listener
   const onLoad = map => {
     mapRef.current = map;
-
     map.addListener('click', e => {
-      if (activeSidebar !== 'feedback') return;
-
+      if (!showFeedbackForm) return;
       const lat = e.latLng.lat();
       const lng = e.latLng.lng();
       const label = currentLocationRef.current.city
         ? `${currentLocationRef.current.city} (${lat.toFixed(4)}, ${lng.toFixed(4)})`
         : `(${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-
-      setSelectedLocation(label);
-      setShowFeedbackForm(true);
+      setSelectedLocation({
+        name: label,
+        lat,
+        lng,
+        city: currentLocationRef.current.city
+      });
     });
   };
 
@@ -118,7 +117,6 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
     mapRef.current = null;
   };
 
-  // Fetch data for city/country
   useEffect(() => {
     setIsLoading(true);
     fetchData()
@@ -127,14 +125,12 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
           onResult?.({ success: false, message: result.message });
           return;
         }
-
         if (result.center && result.zoom != null) {
           setCenter(result.center);
           setZoom(14);
           mapRef.current?.panTo(result.center);
           mapRef.current?.setZoom(14);
         }
-
         onResult?.({
           success: true,
           message: city,
@@ -159,18 +155,12 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
   return (
     <div className="map-page-container">
       <ControlPanel active={activeSidebar} onToggle={onToggle} />
-
       <div className={`map-container ${activeSidebar ? 'sidebar-open' : ''}`}>
-        {isLoading && (
-          <div className="map-loading-overlay">
-            <div className="spinner" />
-          </div>
-        )}
-
+        {isLoading && <div className="map-loading-overlay"><div className="spinner" /></div>}
         {center && (
           <MapLoader
             center={center}
-            zoom={zoom || 14} 
+            zoom={zoom || 14}
             showTraffic={showTraffic}
             showZones={showZones}
             showAlerts={showAlerts}
@@ -185,7 +175,6 @@ export default React.forwardRef(function Map({ city, country, coordinates, isUse
           />
         )}
       </div>
-
       <Sidebar
         active={activeSidebar}
         onToggle={onToggle}
