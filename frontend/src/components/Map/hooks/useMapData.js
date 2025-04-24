@@ -70,9 +70,13 @@ export default function useMapData(city, country, user) {
 
       setFeedbacks(prev => [newFb, ...prev]);  // Add to full list
 
-    } catch (err) {
-      console.error('Error submitting feedback:', err);
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      if (error.response) {
+        console.error("❌ Backend error message:", error.response.data);  // 👈 THIS is what we need
+      }
     }
+    
   };
 
   return { weather, airQuality, feedbacks, fetchData, addFeedback };

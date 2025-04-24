@@ -9,7 +9,7 @@ class FeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeedbackReport
         fields = '__all__'
-        read_only_fields = ('user', 'created_at', 'upvotes')
+        read_only_fields = ('user', 'created_at', 'upvotes', 'approved')
 
     def get_has_upvoted(self, obj):
         user = self.context.get('request').user

@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 
 ISSUE_TYPES = [
+    ('emergency', 'Emergency'),
     ('pothole', 'Pothole'),
     ('streetlight', 'Street Light'),
     ('garbage', 'Garbage'),
@@ -43,6 +44,8 @@ class FeedbackReport(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='reported')
     admin_response = models.TextField(blank=True, default="")
     upvotes = models.PositiveIntegerField(default=0)
+    is_emergency = models.BooleanField(default=False) 
+    approved = models.BooleanField(default=False)  
 
     def __str__(self):
         return f"{self.get_issue_type_display()} at {self.location_name} ({self.get_status_display()})"

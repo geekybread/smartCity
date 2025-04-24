@@ -12,7 +12,7 @@ class EmergencyAlert(models.Model):
         ('critical', 'Critical'),
     ]
 
-    title        = models.CharField(max_length=200, default='Untitled Alert')  # ← ✅ added default
+    title        = models.CharField(max_length=200, default='Alert Title')  # ← ✅ added default
     message      = models.TextField()
     city         = models.CharField(max_length=100)
     level        = models.CharField(max_length=10, choices=LEVEL_CHOICES, default='info')
@@ -29,3 +29,5 @@ class SeenAlert(models.Model):
 
     class Meta:
         unique_together = ('user', 'alert')
+
+

@@ -49,6 +49,11 @@ const FeedbackForm = ({ onSubmit, onCancel, location }) => {
       city: location?.city || "Unknown city",
       upvotes: 0,
     };
+
+    if (formData.issueType === 'emergency') {
+      feedbackData.is_emergency = true;
+    }
+    
     onSubmit(feedbackData);
   };
 
@@ -68,6 +73,7 @@ const FeedbackForm = ({ onSubmit, onCancel, location }) => {
             onChange={handleChange}
             required
           >
+            <option value="emergency">🚨 Emergency</option>
             <option value="pothole">Pothole</option>
             <option value="streetlight">Street Light</option>
             <option value="garbage">Garbage</option>

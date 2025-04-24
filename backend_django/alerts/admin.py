@@ -12,7 +12,7 @@ class EmergencyAlertAdmin(admin.ModelAdmin):
     search_fields = ('city', 'title', 'message')
     list_editable = ('expiry_time', 'level')
     ordering      = ('-created_at',)
-    actions       = ['send_sms_to_verified_users']
+    actions       = ['send_sms_to_verified_users', 'approve_and_send_sms']
 
     def send_sms_to_verified_users(self, request, queryset):
         for alert in queryset:
@@ -32,6 +32,7 @@ class EmergencyAlertAdmin(admin.ModelAdmin):
             send_bulk_sms(numbers, msg)
 
         self.message_user(request, f"SMS sent for {queryset.count()} alert(s).")
+    
 
 
     send_sms_to_verified_users.short_description = "📲 Send SMS to verified users"
