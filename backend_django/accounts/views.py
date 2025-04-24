@@ -16,6 +16,8 @@ from rest_framework.authtoken.models import Token
 from .models import CustomUser
 from .serializers import UserSerializer
 
+from twilio.rest import Client
+from rest_framework.decorators import api_view, permission_classes
 
 @method_decorator(csrf_exempt, name='dispatch')
 class GoogleLogin(APIView):
@@ -81,14 +83,59 @@ class GoogleLogin(APIView):
             status=status.HTTP_200_OK
         )
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def start_phone_verification(request):
+    phone = request.data.get("phone")
+    if not phone:
+        return Response({"error": "Phone number required"}, status=400)
+
+    client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+    verification = client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID).verifications.create(
+        to=phone,
+        channel="sms"
+    )
+    return Response({"status": verification.status})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def verify_phone_otp(request):
+    phone = request.data.get("phone")
+    code = request.data.get("code")
+
+    client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+    try:
+        verification_check = client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID).verification_checks.create(
+            to=phone,
+            code=code
+        )
+    except Exception as e:
+        return Response({"error": str(e)}, status=400)
+
+    if verification_check.status == "approved":
+        user = request.user
+        user.phone_number = phone
+        user.is_phone_verified = True
+        user.save()
+        return Response({"verified": True})
+    return Response({"verified": False}, status=400)
+
+
 
 class CheckAdminStatus(APIView):
-    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data)
+        user = request.user
+        return Response({
+            "email": user.email,
+            "name": user.get_full_name(),
+            "is_admin": user.is_admin,
+            "phone_number": user.phone_number,
+            "is_phone_verified": user.is_phone_verified
+        })
+
 
 
 class UserDetail(APIView):
@@ -103,3 +150,4 @@ class UserDetail(APIView):
             'is_admin': user.is_admin,
             'avatar':   user.avatar
         })
+

@@ -15,6 +15,21 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const refreshUser = async () => {
+    try {
+      const { data } = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/auth/status/`);
+      setUser({
+        email: data.email,
+        name: data.name || null,
+        phone_number: data.phone_number || null,
+        is_phone_verified: data.is_phone_verified || false,
+      });
+    } catch {
+      setUser(null);
+    }
+  };
+  
+
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (token) checkAuthStatus()
@@ -26,24 +41,25 @@ export const AuthProvider = ({ children }) => {
       const { data } = await axios.get(
         `${process.env.REACT_APP_API_BASE_URL}/api/auth/status/`,
         { withCredentials: true }
-      )
-      setUser({ email: data.email, name: data.name || null })
+      );
+      setUser({
+        email: data.email,
+        name: data.name || null,
+        phone_number: data.phone_number || null,
+        is_phone_verified: data.is_phone_verified || false
+      });
     } catch {
-      localStorage.removeItem('token')
-      setUser(null)
+      localStorage.removeItem('token');
+      setUser(null);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+  
 
   const login = (token, userData = null) => {
     localStorage.setItem('token', token)
-    if (userData) {
-      setUser(userData)
-      setLoading(false)
-    } else {
-      checkAuthStatus()
-    }
+    checkAuthStatus()
   }
 
   const logout = () => {
@@ -52,7 +68,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

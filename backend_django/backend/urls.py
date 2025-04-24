@@ -4,7 +4,9 @@ from rest_framework.routers import DefaultRouter
 from accounts.views import (
     GoogleLogin,
     CheckAdminStatus,
-    UserDetail
+    UserDetail,
+    start_phone_verification,
+    verify_phone_otp
 )
 from feedback.views import (
     FeedbackListCreate,
@@ -38,6 +40,9 @@ urlpatterns = [
 
     # Include allauth URLs (for social auth)
     path('accounts/', include('allauth.urls')),
+
+    path('api/accounts/verify/start/', start_phone_verification),
+    path('api/accounts/verify/check/', verify_phone_otp),
 ]
 
 # Include router URLs (e.g., alerts/)
