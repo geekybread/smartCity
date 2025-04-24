@@ -1,5 +1,5 @@
 # serializers.py
-from .models import FeedbackReport, FeedbackUpvote
+from .models import FeedbackReport, FeedbackUpvote, FeedbackComment
 from rest_framework import serializers
 
 class FeedbackSerializer(serializers.ModelSerializer):
@@ -16,3 +16,12 @@ class FeedbackSerializer(serializers.ModelSerializer):
         if user.is_authenticated:
             return FeedbackUpvote.objects.filter(user=user, feedback=obj).exists()
         return False
+class FeedbackCommentSerializer(serializers.ModelSerializer):
+    user_email = serializers.SerializerMethodField()
+    class Meta:
+        model = FeedbackComment
+        fields = '__all__'
+        read_only_fields = ('user', 'created_at', 'report')
+
+    def get_user_email(self, obj):
+        return obj.user.email if obj.user else None

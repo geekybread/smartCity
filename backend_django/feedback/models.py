@@ -51,10 +51,15 @@ class FeedbackReport(models.Model):
         return f"{self.get_issue_type_display()} at {self.location_name} ({self.get_status_display()})"
 
     def clean(self):
-        if not -90 <= float(self.latitude) <= 90:
-            raise ValidationError("Latitude must be between -90 and 90.")
-        if not -180 <= float(self.longitude) <= 180:
-            raise ValidationError("Longitude must be between -180 and 180.")
+    # Validate coordinates only if they are provided
+        if self.latitude is not None:
+            if not -90 <= float(self.latitude) <= 90:
+                raise ValidationError({'latitude': 'Latitude must be between -90 and 90 degrees.'})
+        
+        if self.longitude is not None:
+            if not -180 <= float(self.longitude) <= 180:
+                raise ValidationError({'longitude': 'Longitude must be between -180 and 180 degrees.'})
+
 
     class Meta:
         ordering = ['-created_at']
@@ -79,3 +84,14 @@ class FeedbackUpvote(models.Model):
 
     def __str__(self):
         return f"{self.user} upvoted {self.feedback}"
+    
+    
+class FeedbackComment(models.Model):
+    report = models.ForeignKey(FeedbackReport, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    text = models.TextField()
+    is_official = models.BooleanField(default=False)  # ✅ True = admin response
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Comment on {self.report.id} by {self.user}"

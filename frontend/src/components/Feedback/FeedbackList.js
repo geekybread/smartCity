@@ -45,6 +45,7 @@ const FeedbackList = ({ city }) => {
 
   const issueTypes = [
     { value: 'all', label: 'All Issues' },
+    {value: 'emergency', label: 'Emergency'},
     { value: 'pothole', label: 'Potholes' },
     { value: 'streetlight', label: 'Streetlights' },
     { value: 'garbage', label: 'Garbage' },

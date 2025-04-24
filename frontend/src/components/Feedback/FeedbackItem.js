@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Feedback.css';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
+import CommentSection from './CommentSection'; // ✅ Import modular comment UI
 
 const FeedbackItem = ({ feedback }) => {
   const { user } = useAuth();
@@ -10,10 +11,7 @@ const FeedbackItem = ({ feedback }) => {
 
   useEffect(() => {
     setUpvoted(feedback.has_upvoted || false);
-  }, [feedback]);  
-  
-  
-  
+  }, [feedback]);
 
   const handleUpvote = async () => {
     if (!user) {
@@ -25,14 +23,11 @@ const FeedbackItem = ({ feedback }) => {
       const response = await axios.post(
         `/api/feedback/${feedback.id}/upvote/`,
         {},
-        {
-          headers: { Authorization: `Token ${localStorage.getItem('token')}` }
-        }
+        { headers: { Authorization: `Token ${localStorage.getItem('token')}` } }
       );
       setUpvoteCount(response.data.upvotes);
       setUpvoted(true);
 
-      // Store locally to prevent spam upvotes
       const userKey = `upvotedFeedbacks_${user.email}`;
       const voted = JSON.parse(localStorage.getItem(userKey) || '[]');
       const updated = Array.from(new Set([...voted, feedback.id])).map(Number);
@@ -44,19 +39,20 @@ const FeedbackItem = ({ feedback }) => {
 
   const getIcon = (type) => {
     if (!type) return '❗';
-    switch(type.toLowerCase()) {
+    switch (type.toLowerCase()) {
       case 'pothole': return '🕳️';
       case 'streetlight': return '💡';
       case 'intersection': return '🚦';
       case 'garbage': return '🗑️';
       case 'water': return '💧';
+      case 'emergency': return '🚨';
       default: return '❗';
     }
   };
 
   const getStatusColor = (status) => {
     if (!status) return 'gray';
-    switch(status.toLowerCase()) {
+    switch (status.toLowerCase()) {
       case 'reported': return '#6c757d';
       case 'in_progress': return '#007bff';
       case 'resolved': return '#28a745';
@@ -76,8 +72,8 @@ const FeedbackItem = ({ feedback }) => {
         <span className="feedback-type">
           {formatText(feedback?.issueType || 'Unknown')}
         </span>
-        <span 
-          className="feedback-status" 
+        <span
+          className="feedback-status"
           style={{ backgroundColor: getStatusColor(feedback?.status) }}
         >
           {formatText(feedback?.status)}
@@ -89,7 +85,7 @@ const FeedbackItem = ({ feedback }) => {
       </div>
 
       <div className="feedback-meta">
-        <button 
+        <button
           className={`upvote-btn ${upvoted ? 'upvoted' : ''}`}
           onClick={handleUpvote}
           disabled={upvoted || !user}
@@ -97,17 +93,23 @@ const FeedbackItem = ({ feedback }) => {
         >
           👍 {upvoteCount}
         </button>
-        
+
         <div className="feedback-location-date">
           <span className="feedback-location">
             {feedback?.location_name || feedback?.location || 'Location not specified'}
           </span>
           <span className="feedback-date">
-            {feedback?.created_at ? new Date(feedback.created_at).toLocaleString() : 
-             feedback?.timestamp ? new Date(feedback.timestamp).toLocaleString() : 'Unknown date'}
+            {feedback?.created_at
+              ? new Date(feedback.created_at).toLocaleString()
+              : feedback?.timestamp
+                ? new Date(feedback.timestamp).toLocaleString()
+                : 'Unknown date'}
           </span>
         </div>
       </div>
+
+      {/* ✅ Comment Section */}
+      <CommentSection feedbackId={feedback.id} />
     </div>
   );
 };

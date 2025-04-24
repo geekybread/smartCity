@@ -8,8 +8,8 @@ from django.db.models import F
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 
-from .models import FeedbackReport, FeedbackUpvote
-from .serializers import FeedbackSerializer
+from .models import FeedbackReport, FeedbackUpvote, FeedbackComment
+from .serializers import FeedbackSerializer, FeedbackCommentSerializer
 
 
 class FeedbackListCreate(generics.ListCreateAPIView):
@@ -80,3 +80,23 @@ def update_feedback(request, pk):
         serializer.save()
         return Response(serializer.data)
     return Response(serializer.errors, status=400)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def feedback_comments(request, feedback_id):
+    if request.method == 'GET':
+        comments = FeedbackComment.objects.filter(report_id=feedback_id).order_by('created_at')
+        print("🎯 Loaded comments:", list(comments.values('text', 'is_official', 'user')))
+        serializer = FeedbackCommentSerializer(comments, many=True)
+        return Response(serializer.data)
+
+    if request.method == 'POST':
+        serializer = FeedbackCommentSerializer(data=request.data)
+        if serializer.is_valid():
+            report = get_object_or_404(FeedbackReport, id=feedback_id)
+            serializer.save(user=request.user, report=report)
+            return Response(serializer.data, status=201)
+        else:
+            print("❌ Comment Validation Error:", serializer.errors)
+            return Response(serializer.errors, status=400)

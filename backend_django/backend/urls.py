@@ -11,7 +11,8 @@ from accounts.views import (
 from feedback.views import (
     FeedbackListCreate,
     FeedbackDetail,
-    UpvoteFeedback
+    UpvoteFeedback,
+    feedback_comments
 )
 from alerts.views import EmergencyAlertViewSet  # ✅ import the alert viewset
 from accidentzones.views import AccidentZoneViewSet  # ✅ import the accident zone viewset
@@ -34,6 +35,7 @@ urlpatterns = [
     path('api/feedback/', FeedbackListCreate.as_view(), name='feedback-list'),
     path('api/feedback/<int:pk>/', FeedbackDetail.as_view(), name='feedback-detail'),
     path('api/feedback/<int:pk>/upvote/', UpvoteFeedback.as_view(), name='feedback-upvote'),
+    path('api/feedback/<int:feedback_id>/comments/', feedback_comments),
 
     # Include DRF auth URLs for browsable API
     path('api-auth/', include('rest_framework.urls')),
@@ -43,6 +45,9 @@ urlpatterns = [
 
     path('api/accounts/verify/start/', start_phone_verification),
     path('api/accounts/verify/check/', verify_phone_otp),
+
+    
+
 ]
 
 # Include router URLs (e.g., alerts/)

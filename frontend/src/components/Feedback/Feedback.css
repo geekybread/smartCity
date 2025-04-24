@@ -239,3 +239,43 @@
   border-radius: 4px;
   margin-bottom: 8px;
 }
+
+.feedback-comments {
+  margin-top: 15px;
+  border-top: 1px solid #ddd;
+  padding-top: 10px;
+}
+
+.comment-list {
+  margin-bottom: 10px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.user-comment, .official-response {
+  background: #f9f9f9;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.official-response {
+  background: #e9ecef;
+  font-weight: bold;
+}
+
+.comment-form textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 6px;
+  margin-bottom: 8px;
+}
+
+.comment-form button {
+  padding: 6px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
