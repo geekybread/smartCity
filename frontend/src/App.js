@@ -1,6 +1,5 @@
-// src/App.js
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import GoogleAuth from './components/Auth/GoogleLogin';
 import Map from './components/Map';
@@ -10,6 +9,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import EmergencyBanner from './components/Alerts/EmergencyBanner';
 import PhoneVerificationModal from './components/Auth/PhoneVerificationModal';
+import ProfilePage from './pages/ProfilePage';
 
 axios.defaults.baseURL = process.env.REACT_APP_API_BASE_URL;
 axios.interceptors.request.use(config => {
@@ -21,12 +21,12 @@ axios.interceptors.request.use(config => {
 });
 
 function App() {
-  const { loading, user, refreshUser } = useAuth();
+  const { user, loading, refreshUser } = useAuth();
   const [location, setLocation] = useState(null);
   const [pendingLocation, setPendingLocation] = useState(null);
   const [searchQuery, setSearchQuery] = useState({ city: '', country: '' });
-  const mapRef = useRef();
   const [showPhonePrompt, setShowPhonePrompt] = useState(false);
+  const mapRef = useRef();
 
   const fetchCityFromCoordinates = async (lat, lng) => {
     const apiKey = process.env.REACT_APP_GOOGLE_GEOCODE_API_KEY;
@@ -75,7 +75,11 @@ function App() {
           isUserLocation: false
         });
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
     );
   }, [location]);
 
@@ -85,16 +89,6 @@ function App() {
       setPendingLocation(null);
     }
   }, [pendingLocation]);
-
-  useEffect(() => {
-    if (user && (!user.phone_number || !user.is_phone_verified)) {
-      setShowPhonePrompt(true);
-    } else {
-      setShowPhonePrompt(false); // ✅ Close the modal on logout or if verified
-    }
-  }, [user]);
-  
-  
 
   const handleMapResult = useCallback(result => {
     if (result.success) toast.success(result.message);
@@ -112,7 +106,9 @@ function App() {
       toast.error('Please enter a city or country');
       return;
     }
+
     const newLoc = { city, country };
+
     if (
       newLoc.city.toLowerCase() === location?.city?.toLowerCase() &&
       newLoc.country.toLowerCase() === location?.country?.toLowerCase()
@@ -141,62 +137,86 @@ function App() {
   return (
     <div className="App">
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <h1>Smart City Dashboard</h1>
+      <div className="dashboard-header">
+        <h1 className="dashboard-title">
+          <img
+            src="/assets/city.png"
+            alt="City Icon"
+            className="dashboard-logo"
+          />
+          Smart City Dashboard
+        </h1>
+      </div>
+
+
+
+
       </div>
 
       <ToastContainer position="top-center" autoClose={2000} hideProgressBar />
 
-      <div className="auth-controls">
-        <GoogleAuth />
-      </div>
 
-      <form onSubmit={handleSearch} className="search-bar">
-        <div className="search-container">
-          <div className="search-controls">
-            <input
-              type="text"
-              name="city"
-              placeholder="City (e.g. Delhi)"
-              value={searchQuery.city}
-              onChange={handleInputChange}
-            />
-            <input
-              type="text"
-              name="country"
-              placeholder="Country (e.g. India)"
-              value={searchQuery.country}
-              onChange={handleInputChange}
-            />
-            <button type="submit" className="search-button">
-              Search
-            </button>
-          </div>
-        </div>
-      </form>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <>
+              <div className="auth-controls">
+                <GoogleAuth />
+              </div>
 
-      <EmergencyBanner city={location.city} />
+              <form onSubmit={handleSearch} className="search-bar">
+                <div className="search-container">
+                  <div className="search-controls">
+                    <input
+                      type="text"
+                      name="city"
+                      placeholder="City (e.g. Delhi)"
+                      value={searchQuery.city}
+                      onChange={handleInputChange}
+                    />
+                    <input
+                      type="text"
+                      name="country"
+                      placeholder="Country (e.g. India)"
+                      value={searchQuery.country}
+                      onChange={handleInputChange}
+                    />
+                    <button type="submit" className="search-button">
+                      Search
+                    </button>
+                  </div>
+                </div>
+              </form>
 
-      <Map
-        city={location.city}
-        country={location.country}
-        coordinates={location.coordinates}
-        isUserLocation={location.isUserLocation}
-        onResult={handleMapResult}
-        ref={mapRef}
-        mapRef={mapRef}
-      />
+              <EmergencyBanner city={location.city} />
+
+              <Map
+                city={location.city}
+                country={location.country}
+                coordinates={location.coordinates}
+                isUserLocation={location.isUserLocation}
+                onResult={handleMapResult}
+                ref={mapRef}
+                mapRef={mapRef}
+              />
+            </>
+          }
+        />
+
+        <Route path="/profile" element={<ProfilePage />} />
+      </Routes>
 
       {showPhonePrompt && (
         <PhoneVerificationModal
-        isOpen={showPhonePrompt}
-        onClose={() => setShowPhonePrompt(false)}
-        onVerified={async () => {
-          await refreshUser(); // ✅ pull latest phone_verified flag
-          setShowPhonePrompt(false); // ✅ hide modal
-          toast.success("Phone verified successfully");
-        }}
-      />
-      
+          isOpen={showPhonePrompt}
+          onClose={() => setShowPhonePrompt(false)}
+          onVerified={async () => {
+            await refreshUser();
+            setShowPhonePrompt(false);
+            toast.success("Phone verified successfully");
+          }}
+        />
       )}
     </div>
   );

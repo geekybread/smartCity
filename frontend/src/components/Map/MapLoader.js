@@ -8,6 +8,7 @@ import {
   Marker,
 } from '@react-google-maps/api'
 import { GOOGLE_MAPS_CONFIG } from './configs/maps'
+import './css/MapContainer.css'
 
 
 export default function MapLoader({

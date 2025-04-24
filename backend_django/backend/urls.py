@@ -6,7 +6,8 @@ from accounts.views import (
     CheckAdminStatus,
     UserDetail,
     start_phone_verification,
-    verify_phone_otp
+    verify_phone_otp,
+    user_profile
 )
 from feedback.views import (
     FeedbackListCreate,
@@ -46,7 +47,7 @@ urlpatterns = [
     path('api/accounts/verify/start/', start_phone_verification),
     path('api/accounts/verify/check/', verify_phone_otp),
 
-    
+    path('api/accounts/profile/', user_profile),
 
 ]
 

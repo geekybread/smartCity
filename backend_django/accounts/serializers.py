@@ -24,3 +24,12 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['id', 'email', 'first_name', 'last_name', 'is_admin', 'avatar']
+
+        
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'email', 'first_name', 'phone_number', 'is_phone_verified')
+        read_only_fields = ('id', 'email', 'is_phone_verified')
+
+

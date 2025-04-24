@@ -1,4 +1,5 @@
 import React from 'react';
+import '../css/WeatherPanel.css';
 
 export default function WeatherSidebar({ weather, onToggle }) {
   if (!weather) return null;

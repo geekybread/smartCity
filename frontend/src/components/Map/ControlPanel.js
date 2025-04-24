@@ -1,6 +1,7 @@
 // src/components/Map/ControlPanel.js
 
 import React from 'react'
+import './css/LeftPanel.css'
 
 const controls = [
   { name: 'weather',   icon: '☀️', label: 'Weather' },

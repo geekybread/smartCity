@@ -18,12 +18,14 @@ export const AuthProvider = ({ children }) => {
   const refreshUser = async () => {
     try {
       const { data } = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/auth/status/`);
+      console.log("🧠 REFRESH USER API RESPONSE:", data); // ✅ ADD THIS
       setUser({
         email: data.email,
-        name: data.name || null,
+        first_name: data.first_name || null,
         phone_number: data.phone_number || null,
         is_phone_verified: data.is_phone_verified || false,
       });
+      
     } catch {
       setUser(null);
     }
@@ -42,12 +44,14 @@ export const AuthProvider = ({ children }) => {
         `${process.env.REACT_APP_API_BASE_URL}/api/auth/status/`,
         { withCredentials: true }
       );
+      console.log("🔎 CHECK AUTH STATUS API RESPONSE:", data); // ✅ ADD THIS
       setUser({
         email: data.email,
-        name: data.name || null,
+        first_name: data.first_name || null,
         phone_number: data.phone_number || null,
-        is_phone_verified: data.is_phone_verified || false
+        is_phone_verified: data.is_phone_verified || false,
       });
+      
     } catch {
       localStorage.removeItem('token');
       setUser(null);
@@ -59,8 +63,15 @@ export const AuthProvider = ({ children }) => {
 
   const login = (token, userData = null) => {
     localStorage.setItem('token', token)
-    checkAuthStatus()
+    console.log("🔐 LOGIN CALLED with:", userData); // ✅ ADD THIS
+    if (userData) {
+      setUser(userData);
+      setLoading(false);
+    } else {
+      checkAuthStatus();
+    }
   }
+  
 
   const logout = () => {
     localStorage.removeItem('token')

@@ -1,0 +1,99 @@
+.profile-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 85vh;
+    background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .profile-card {
+    background-color: #1e1e1e;
+    color: #f5f5f5;
+    padding: 30px 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    max-width: 500px;
+    width: 100%;
+    text-align: left;
+    animation: fadeIn 0.4s ease-in-out;
+  }
+  
+  .profile-card h2 {
+    display: flex;
+    align-items: center;
+    font-size: 24px;
+    margin-bottom: 25px;
+    color: #ffd700;
+  }
+  
+  .profile-card h2::before {
+    content: '👤';
+    margin-right: 10px;
+  }
+  
+  .profile-card label {
+    font-weight: bold;
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    color: #ccc;
+  }
+  
+  .profile-card p, .profile-card input {
+    font-size: 15px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    background: #2d2d2d;
+    color: white;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  .profile-card input:focus {
+    outline: 2px solid #ffa500;
+    background: #333;
+  }
+  
+  .profile-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+  }
+  
+  .edit-button, .save-button, .cancel-button, .back-button {
+    background-color: #ffa500;
+    color: #1e1e1e;
+    padding: 8px 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-right: 10px;
+  }
+  
+  .edit-button:hover,
+  .save-button:hover,
+  .cancel-button:hover,
+  .back-button:hover {
+    background-color: #ffba33;
+  }
+  
+  .back-button {
+    background-color: transparent;
+    border: 1px solid #ccc;
+    color: #ccc;
+  }
+  
+  .back-button:hover {
+    background-color: #333;
+    color: white;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  

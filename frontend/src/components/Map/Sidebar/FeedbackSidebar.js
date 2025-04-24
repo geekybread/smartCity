@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import FeedbackForm from '../../Feedback/FeedbackForm';
 import FeedbackList from '../../Feedback/FeedbackList';
 import api from '../../../services/api';
+import '../../Feedback/Feedback.css';  
 
 export default function FeedbackSidebar({
   city,

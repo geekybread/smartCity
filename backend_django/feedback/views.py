@@ -87,7 +87,7 @@ def update_feedback(request, pk):
 def feedback_comments(request, feedback_id):
     if request.method == 'GET':
         comments = FeedbackComment.objects.filter(report_id=feedback_id).order_by('created_at')
-        print("🎯 Loaded comments:", list(comments.values('text', 'is_official', 'user')))
+        # print("🎯 Loaded comments:", list(comments.values('text', 'is_official', 'user')))
         serializer = FeedbackCommentSerializer(comments, many=True)
         return Response(serializer.data)
 

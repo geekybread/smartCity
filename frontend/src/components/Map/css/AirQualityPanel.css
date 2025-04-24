@@ -1,0 +1,68 @@
+.airquality-sidebar {
+    color: #eee;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .aqi-display {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .aqi-value {
+    font-size: 3rem;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    background-color: #007bff;
+    color: white;
+    box-shadow: 0 0 10px rgba(0,123,255,0.4);
+  }
+  
+  .aqi-label {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #bbb;
+  }
+  
+  .dominant-pollutant {
+    font-size: 0.9rem;
+    color: #888;
+    margin-top: 5px;
+    text-align: center;
+  }
+  
+  .pollution-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .stat-item {
+    background: #222;
+    border-radius: 10px;
+    padding: 10px;
+  }
+  
+  .stat-item span {
+    font-size: 0.75rem;
+    color: #999;
+  }
+  
+  .stat-item strong {
+    font-size: 1.1rem;
+    color: #fff;
+  }
+  
+  /* AQI background options (optional classes if dynamic) */
+  .aqi-good { background-color: #00e400; color: #000; }
+  .aqi-moderate { background-color: #ffff00; color: #000; }
+  .aqi-unhealthy-sensitive { background-color: #ff7e00; color: #000; }
+  .aqi-unhealthy { background-color: #ff0000; color: #fff; }
+  .aqi-very-unhealthy { background-color: #8f3f97; color: #fff; }
+  .aqi-hazardous { background-color: #7e0023; color: #fff; }
+  

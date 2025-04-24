@@ -1,0 +1,57 @@
+.weather-sidebar {
+    color: #eee;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .weather-display {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .weather-icon img {
+    width: 80px;
+    height: 80px;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.2));
+  }
+  
+  .weather-details {
+    margin-left: 15px;
+  }
+  
+  .temperature {
+    font-size: 2.4rem;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 5px;
+  }
+  
+  .description {
+    font-size: 1rem;
+    color: #aaa;
+    text-transform: capitalize;
+  }
+  
+  .weather-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .stat-item {
+    background: #222;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: inset 0 0 3px rgba(255, 255, 255, 0.05);
+  }
+  
+  .stat-item span {
+    font-size: 0.75rem;
+    color: #999;
+  }
+  
+  .stat-item strong {
+    font-size: 1.2rem;
+    color: #fff;
+  }
+  

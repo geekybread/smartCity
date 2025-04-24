@@ -14,7 +14,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 
 from .models import CustomUser
-from .serializers import UserSerializer
+from .serializers import UserSerializer, ProfileSerializer
 
 from twilio.rest import Client
 from rest_framework.decorators import api_view, permission_classes
@@ -130,7 +130,7 @@ class CheckAdminStatus(APIView):
         user = request.user
         return Response({
             "email": user.email,
-            "name": user.get_full_name(),
+            "first_name": user.get_full_name(),
             "is_admin": user.is_admin,
             "phone_number": user.phone_number,
             "is_phone_verified": user.is_phone_verified
@@ -150,4 +150,17 @@ class UserDetail(APIView):
             'is_admin': user.is_admin,
             'avatar':   user.avatar
         })
+    
+@api_view(['GET', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def user_profile(request):
+    if request.method == 'GET':
+        serializer = ProfileSerializer(request.user)
+        return Response(serializer.data)
 
+    elif request.method == 'PATCH':
+        serializer = ProfileSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)

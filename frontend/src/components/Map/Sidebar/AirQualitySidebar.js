@@ -1,4 +1,5 @@
 import React from 'react';
+import '../css/AirQualityPanel.css';
 
 export default function AirQualitySidebar({ airQuality, onToggle }) {
   if (!airQuality) {
@@ -26,6 +27,7 @@ export default function AirQualitySidebar({ airQuality, onToggle }) {
 
   return (
     <>
+    
       <div className="aqi-display">
         <div className={`aqi-value aqi-${level}`}>{airQuality.aqi || 'N/A'}</div>
         <div className="aqi-label">{getDesc(level)}</div>

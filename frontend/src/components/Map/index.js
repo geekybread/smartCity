@@ -6,7 +6,7 @@ import Sidebar from './Sidebar';
 import useMapData from './hooks/useMapData';
 import useAccidentZones from './hooks/useAccidentZones';
 import useAlerts from './hooks/useAlerts';
-import './Map.css';
+import './css/MapContainer.css';
 
 export default React.forwardRef(function Map({ city, country, coordinates, isUserLocation, onResult, mapRef, externalMapRef}, ref) {
   const internalMapRef = useRef();

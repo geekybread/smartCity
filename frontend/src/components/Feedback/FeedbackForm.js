@@ -9,7 +9,6 @@ const FeedbackForm = ({ onSubmit, onCancel, location }) => {
     issueType: 'pothole',
     description: '',
     severity: 'medium',
-    //isAnonymous: false,
   });
 
   useEffect(() => {
@@ -53,79 +52,71 @@ const FeedbackForm = ({ onSubmit, onCancel, location }) => {
     if (formData.issueType === 'emergency') {
       feedbackData.is_emergency = true;
     }
-    
+
     onSubmit(feedbackData);
   };
 
-  
   const isFormValid = formData.description.trim() !== '';
 
   return (
-    <div className="feedback-form-container">
+    <form className="report-form" onSubmit={handleSubmit}>
       <h3>Report an Issue</h3>
       {error && <div className="error-message">{error}</div>}
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Issue Type:</label>
-          <select 
-            name="issueType" 
-            value={formData.issueType} 
-            onChange={handleChange}
-            required
-          >
-            <option value="emergency">🚨 Emergency</option>
-            <option value="pothole">Pothole</option>
-            <option value="streetlight">Street Light</option>
-            <option value="garbage">Garbage</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
 
-        <div className="form-group">
-          <label>Description:</label>
-          <textarea 
-            name="description" 
-            value={formData.description} 
-            onChange={handleChange}
-            placeholder="Describe the issue..."
-            required
-          />
-        </div>
+      <div className="form-group">
+        <label>Issue Type:</label>
+        <select 
+          name="issueType" 
+          value={formData.issueType} 
+          onChange={handleChange}
+          required
+        >
+          <option value="emergency">🚨 Emergency</option>
+          <option value="pothole">Pothole</option>
+          <option value="streetlight">Street Light</option>
+          <option value="garbage">Garbage</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
 
-        <div className="form-group">
-          <label>Severity:</label>
-          <select 
-            name="severity" 
-            value={formData.severity} 
-            onChange={handleChange} 
-            required
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </div>
+      <div className="form-group">
+        <label>Description:</label>
+        <textarea 
+          name="description" 
+          value={formData.description} 
+          onChange={handleChange}
+          placeholder="Describe the issue..."
+          required
+        />
+      </div>
 
-        <div className="form-group">
-          <p className="location-display">
-            <strong>Location:</strong> {location?.name || 'No location selected'}
-          </p>
-        </div>
+      <div className="form-group">
+        <label>Severity:</label>
+        <select 
+          name="severity" 
+          value={formData.severity} 
+          onChange={handleChange} 
+          required
+        >
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
 
-        <div className="form-actions">
-          <button type="button" className="cancel-btn" onClick={onCancel}>
-            Cancel
-          </button>
-          <button 
-            type="submit" 
-            className="submit-btn" 
-            disabled={!isFormValid}
-          >
-            Submit Report
-          </button>
-        </div>
-      </form>
-    </div>
+      <div className="report-location">
+        <strong>Location:</strong> {location?.name || 'No location selected'}
+      </div>
+
+      <div className="report-buttons">
+        <button type="button" className="cancel-btn" onClick={onCancel}>
+          Cancel
+        </button>
+        <button type="submit" className="submit-btn" disabled={!isFormValid}>
+          Submit Report
+        </button>
+      </div>
+    </form>
   );
 };
 

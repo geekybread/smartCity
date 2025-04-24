@@ -1,281 +1,320 @@
-/* === Feedback Form === */
-
-.feedback-form-container {
-  background: white;
+/* === Sidebar Container === */
+.feedback-section {
   padding: 20px;
+  background: #111;
+  color: #f0f0f0;
   border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.feedback-form-container h3 {
-  margin-top: 0;
-  color: #333;
-}
-
-.location-display {
-  background: #f5f5f5;
-  padding: 8px;
-  border-radius: 4px;
-  margin: 10px 0;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.submit-btn {
-  background-color: #4caf50;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.submit-btn:hover {
-  background-color: #45a049;
-}
-
-.cancel-btn {
-  background-color: #f5f5f5;
-  color: #333;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.cancel-btn:hover {
-  background-color: #e0e0e0;
-}
-
-/* === Feedback Controls (Top Filters) === */
-
-.feedback-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 15px;
-}
-
-.filter-control,
-.progress-control {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  height: 100%;
   display: flex;
   flex-direction: column;
-  font-size: 14px;
-  min-width: 140px;
 }
 
-.filter-control label,
-.progress-control label {
-  margin-bottom: 4px;
-  font-weight: 500;
-  color: #fff;
-}
-
-.filter-control select,
-.progress-control select {
-  padding: 6px 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #fff;
-  color: #000;
-  font-size: 14px;
-  outline: none;
-}
-
-/* === Report Button === */
-
-.report-issue-btn {
-  background-color: #2196f3;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-bottom: 20px;
-  width: 100%;
-}
-
-.report-issue-btn:hover {
-  background-color: #0b7dda;
-}
-
-/* === Feedback Item === */
-
-.feedback-item {
-  background: white;
-  border-radius: 8px;
-  padding: 15px;
+/* === Filter Controls === */
+.feedback-filters {
+  display: flex;
+  gap: 10px;
   margin-bottom: 15px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.feedback-item.highlight {
-  border: 2px solid #007bff;
-  background-color: #e9f5ff;
-  transition: background-color 0.3s ease;
+.feedback-filters select {
+  background: #222;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+}
+
+/* === Feedback Cards === */
+.feedback-item {
+  background: #1c1c1c;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  padding: 15px;
+  border: 1px solid #333;
+  transition: border 0.3s;
+}
+
+.feedback-item:hover {
+  border-color: #007bff;
 }
 
 .feedback-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 10px;
 }
 
 .feedback-icon {
-  font-size: 24px;
+  font-size: 22px;
 }
 
 .feedback-type {
+  font-weight: bold;
+  color: #eee;
   text-transform: capitalize;
-  font-weight: 600;
-  flex-grow: 1;
 }
 
 .feedback-status {
-  color: white;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  text-transform: capitalize;
+  margin-left: auto;
+  background: #555;
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #fff;
+  text-transform: uppercase;
 }
 
-.feedback-description {
-  margin-bottom: 10px;
-  color: #333;
-  line-height: 1.4;
+.feedback-status.Reported {
+  background-color: #6c757d;
 }
 
+.feedback-status.In_Progress {
+  background-color: #007bff;
+}
+
+.feedback-status.Resolved {
+  background-color: #28a745;
+}
+
+/* === Meta and Upvote === */
 .feedback-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  font-size: 0.8rem;
+  color: #aaa;
 }
-
-.feedback-location-date {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  font-size: 12px;
-  color: #666;
-}
-
-.feedback-location {
-  font-weight: 500;
-}
-
-.feedback-date {
-  color: #999;
-}
-
-/* === Upvote Button === */
 
 .upvote-btn {
-  background: #f5f5f5;
+  background: none;
   border: none;
-  padding: 5px 10px;
-  border-radius: 15px;
+  color: #ffa500;
+  font-size: 1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
-}
-
-.upvote-btn:hover:not(.upvoted) {
-  background: #e0e0e0;
+  gap: 4px;
 }
 
 .upvote-btn.upvoted {
-  background: #e3f2fd;
-  color: #2196f3;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.upvote-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* === Admin Response === */
-
-.admin-response {
-  margin-top: 10px;
-}
-
-.admin-response textarea {
-  width: 100%;
-  min-height: 80px;
-  padding: 8px;
-  margin-bottom: 8px;
-  border-radius: 4px;
-  border: 1px solid #ced4da;
-}
-
-.admin-response button {
-  margin-right: 8px;
-  padding: 5px 10px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.admin-response button:hover {
-  background-color: #0056b3;
-}
-
-.official-response {
-  background-color: #e9ecef;
-  padding: 8px;
-  border-radius: 4px;
-  margin-bottom: 8px;
-}
-
-.feedback-comments {
-  margin-top: 15px;
-  border-top: 1px solid #ddd;
-  padding-top: 10px;
-}
-
-.comment-list {
-  margin-bottom: 10px;
-  max-height: 150px;
-  overflow-y: auto;
-}
-
-.user-comment, .official-response {
-  background: #f9f9f9;
-  padding: 8px;
-  border-radius: 6px;
-  margin-bottom: 6px;
-  font-size: 14px;
-}
-
-.official-response {
-  background: #e9ecef;
+  color: gold;
   font-weight: bold;
 }
 
-.comment-form textarea {
-  width: 100%;
-  min-height: 60px;
-  padding: 6px;
+/* === Comments === */
+.feedback-comments {
+  margin-top: 15px;
+}
+
+.comment-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+.user-comment,
+.official-response {
+  background-color: #222;
+  border-radius: 6px;
+  padding: 10px;
   margin-bottom: 8px;
+  font-size: 0.85rem;
+}
+
+.official-response {
+  border-left: 3px solid #007bff;
+  background-color: #1a1a1a;
+}
+
+.comment-meta {
+  font-size: 0.75rem;
+  margin-bottom: 4px;
+  color: #bbb;
+}
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.comment-form textarea {
+  resize: none;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  background: #1d1d1d;
+  color: #fff;
+  font-size: 0.9rem;
 }
 
 .comment-form button {
-  padding: 6px 12px;
   background-color: #007bff;
-  color: white;
   border: none;
-  border-radius: 4px;
+  color: white;
+  padding: 8px 12px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.comment-form button:hover {
+  background-color: #3399ff;
+}
+
+.error-message {
+  color: red;
+  font-size: 0.8rem;
+}
+
+
+/* === Report Issue Form === */
+.report-form {
+  background: #181818;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  margin-bottom: 20px;
+}
+
+.report-form h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f8f8f8;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 6px;
+}
+
+/* Input Labels */
+.report-form label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: #ccc;
+  font-weight: 500;
+}
+
+/* Selects and Textarea */
+.report-form select,
+.report-form textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background-color: #1f1f1f;
+  color: #f0f0f0;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+  transition: border-color 0.2s ease;
+}
+
+.report-form select:focus,
+.report-form textarea:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* Location Display */
+.report-location {
+  background-color: #222;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #eee;
+  margin-bottom: 20px;
+}
+
+.report-location strong {
+  color: #fff;
+}
+
+/* Buttons */
+.report-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.report-buttons button {
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.report-buttons .cancel-btn {
+  background-color: #444;
+  color: #eee;
+}
+
+.report-buttons .cancel-btn:hover {
+  background-color: #333;
+}
+
+.report-buttons .submit-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.report-buttons .submit-btn:hover {
+  background-color: #218838;
+}
+
+/* === Controls Wrapper === */
+.feedback-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* === Highlighted New Issue Button === */
+.report-issue-btn {
+  background-color: #ff9800;
+  color: #000;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: all 0.2s ease;
+}
+
+.report-issue-btn:hover {
+  background-color: #ffa726;
+  transform: scale(1.02);
+}
+
+/* === Filter Controls === */
+.feedback-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.feedback-filters label {
+  color: #ccc;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feedback-filters select {
+  background: #222;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
 }

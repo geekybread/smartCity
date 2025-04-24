@@ -1,4 +1,5 @@
 import React from 'react';
+import '../css/TrafficPanel.css';
 
 export default function TrafficSidebar({ showTraffic }) {
   return (

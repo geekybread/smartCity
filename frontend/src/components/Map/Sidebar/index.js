@@ -7,7 +7,7 @@ import AirQualitySidebar     from './AirQualitySidebar'
 import TrafficSidebar        from './TrafficSidebar'
 import FeedbackSidebar       from './FeedbackSidebar'
 import EmergencyAlertSidebar from './EmergencyAlertSidebar'
-import '../Map.css'
+import '../css/Sidebar.css'
 
 const titles = {
   weather:    'Weather Data',
