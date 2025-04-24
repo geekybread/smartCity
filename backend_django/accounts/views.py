@@ -60,16 +60,16 @@ class GoogleLogin(APIView):
         avatar     = idinfo.get('picture', '')
 
         # 3) Get or create the CustomUser
-        user, created = CustomUser.objects.get_or_create(
-            email=email,
-            defaults={
-                'username':   email.split('@')[0],
-                'first_name': first,
-                'last_name':  last,
-                'google_id':  google_sub,
-                'avatar':     avatar,
-            }
-        )
+        user, created = CustomUser.objects.get_or_create(email=email)
+
+        # 🔁 Sync on every login (in case avatar or name changes in Google)
+        user.username = user.username or email.split('@')[0]
+        user.google_id = user.google_id or google_sub
+        user.first_name = first or user.first_name
+        user.last_name = last or user.last_name
+        user.avatar = avatar or user.avatar
+        user.save()
+
 
         # 4) Issue or retrieve a DRF token for the user
         token, _ = Token.objects.get_or_create(user=user)
